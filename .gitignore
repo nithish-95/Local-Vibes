@@ -1,0 +1,17 @@
+
+# Go
+*.mod
+*.sum
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Node
+node_modules/
+dist/
+.env
+.DS_Store
+
+# Database
+*.db
