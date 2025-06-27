@@ -1,49 +1,48 @@
 package routes
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/nithish-95/Local-Vibes/backend/cmd/handlers"
 	"github.com/nithish-95/Local-Vibes/backend/internal/database"
-	"github.com/nithish-95/Local-Vibes/backend/internal/session"
+	"github.com/nithish-95/Local-Vibes/backend/internal/services"
 )
 
 func SetupRouter() *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	// Add routes here later
+	// Initialize services
+	userService := services.NewUserService(database.DB)
+	eventService := services.NewEventService(database.DB)
+
+	// Initialize handlers with services
+	authHandler := handlers.NewAuthHandler(userService)
+	eventHandler := handlers.NewEventHandler(eventService)
+
+	// Public routes
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello from Go Backend!"))
 	})
 
-	// Corrected route
-	r.Get("/api/user", func(w http.ResponseWriter, r *http.Request) {
-		sess, _ := session.Store.Get(r, "session-name")
-		userID, ok := sess.Values["user_id"].(int)
-		if !ok {
-			http.Error(w, "Not authenticated", http.StatusUnauthorized)
-			return
-		}
+	// Auth routes
+	r.Post("/api/register", authHandler.Register)
+	r.Post("/api/login", authHandler.Login)
+	r.Post("/api/logout", authHandler.Logout)
+	r.Get("/api/user", authHandler.GetCurrentUser)
 
-		var username string
-		err := database.DB.QueryRow("SELECT username FROM users WHERE id = ?", userID).Scan(&username)
-		if err != nil {
-			http.Error(w, "User not found", http.StatusInternalServerError)
-			return
-		}
-
-		user := map[string]string{"userName": username}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(user)
-	})
-
-	r.Post("/api/register", handlers.Register)
-	r.Post("/api/login", handlers.Login)
-	r.Post("/api/logout", handlers.Logout)
+	// Event routes
+	r.Post("/api/events", eventHandler.CreateEvent)
+	r.Get("/api/events", eventHandler.GetEvents)
+	r.Put("/api/events/{eventID}", eventHandler.UpdateEvent)
+	r.Delete("/api/events/{eventID}", eventHandler.DeleteEvent)
+	r.Get("/api/events/hosted", eventHandler.GetHostedEvents)
+	r.Get("/api/events/available", eventHandler.GetAvailableEvents)
+	r.Post("/api/events/{eventID}/join", eventHandler.JoinEvent)
+	r.Post("/api/events/{eventID}/leave", eventHandler.LeaveEvent)
+	r.Get("/api/events/{eventID}/is-joined", eventHandler.IsJoined)
 
 	return r
 }
