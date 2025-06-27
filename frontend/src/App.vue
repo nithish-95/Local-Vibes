@@ -10,6 +10,7 @@
           </div>
           <div class="flex items-center">
             <template v-if="isLoggedIn">
+              <router-link to="/create-event" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Create Event</router-link>
               <span class="px-3 py-2 text-sm font-medium text-gray-700">Welcome, {{ userName }}</span>
               <button @click="logout" class="ml-4 px-3 py-2 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700">Logout</button>
             </template>
@@ -34,9 +35,7 @@ export default {
       isLoggedIn: false,
     };
   },
-  async created() {
-    await this.checkAuth();
-  },
+  
   watch: {
     $route: 'checkAuth',
   },

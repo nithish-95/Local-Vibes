@@ -1,36 +1,31 @@
-
 package handlers
 
 import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/nithish-95/Local-Vibes/backend/internal/database"
+	"github.com/nithish-95/Local-Vibes/backend/internal/models"
+	"github.com/nithish-95/Local-Vibes/backend/internal/services"
 	"github.com/nithish-95/Local-Vibes/backend/internal/session"
-	"golang.org/x/crypto/bcrypt"
 )
 
-type User struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+type AuthHandler struct {
+	UserService *services.UserService
 }
 
-func Register(w http.ResponseWriter, r *http.Request) {
-	var user User
+func NewAuthHandler(userService *services.UserService) *AuthHandler {
+	return &AuthHandler{UserService: userService}
+}
+
+func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
+	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	_, err = database.DB.Exec("INSERT INTO users (username, password) VALUES (?, ?)", user.Username, string(hashedPassword))
-	if err != nil {
+	if err := h.UserService.RegisterUser(user.Username, user.Password); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -38,25 +33,17 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func Login(w http.ResponseWriter, r *http.Request) {
-	var user User
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	var hashedPassword string
-	var userID int
-	err = database.DB.QueryRow("SELECT id, password FROM users WHERE username = ?", user.Username).Scan(&userID, &hashedPassword)
+	userID, err := h.UserService.AuthenticateUser(user.Username, user.Password)
 	if err != nil {
-		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
-		return
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(user.Password))
-	if err != nil {
-		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
@@ -67,9 +54,26 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func Logout(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	sess, _ := session.Store.Get(r, "session-name")
 	sess.Options.MaxAge = -1
 	sess.Save(r, w)
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *AuthHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
+	sess, _ := session.Store.Get(r, "session-name")
+	userID, ok := sess.Values["user_id"].(int)
+	if !ok {
+		http.Error(w, "Not authenticated", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.UserService.GetUserByID(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{"userName": user.Username})
 }
