@@ -180,3 +180,18 @@ export async function checkIfJoined(eventID) {
     throw error;
   }
 }
+
+export async function getJoinedEvents() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/events/joined`);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch joined events');
+    }
+    const data = await response.json();
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching joined events:', error);
+    throw error;
+  }
+}

@@ -36,6 +36,7 @@ func SetupRouter() *chi.Mux {
 	// Event routes
 	r.Post("/api/events", eventHandler.CreateEvent)
 	r.Get("/api/events", eventHandler.GetEvents)
+	r.Get("/api/events/{eventID}", eventHandler.GetEventByID)
 	r.Put("/api/events/{eventID}", eventHandler.UpdateEvent)
 	r.Delete("/api/events/{eventID}", eventHandler.DeleteEvent)
 	r.Get("/api/events/hosted", eventHandler.GetHostedEvents)
@@ -43,6 +44,7 @@ func SetupRouter() *chi.Mux {
 	r.Post("/api/events/{eventID}/join", eventHandler.JoinEvent)
 	r.Post("/api/events/{eventID}/leave", eventHandler.LeaveEvent)
 	r.Get("/api/events/{eventID}/is-joined", eventHandler.IsJoined)
+	r.Get("/api/events/joined", eventHandler.GetJoinedEvents)
 
 	return r
 }

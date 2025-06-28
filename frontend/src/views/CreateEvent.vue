@@ -1,43 +1,45 @@
 <template>
-  <div class="min-h-screen bg-gray-100 flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-      <h2 class="text-2xl font-bold mb-6 text-center">Create New Event</h2>
-      <form @submit.prevent="handleCreateEvent">
-        <div class="mb-4">
-          <label for="title" class="block text-gray-700 text-sm font-bold mb-2">Title</label>
-          <input type="text" v-model="event.title" id="title" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+  <div class="max-w-2xl mx-auto p-8 bg-white rounded-lg shadow-md">
+    <button @click="$router.go(-1)" class="mb-4 text-gray-600 hover:text-gray-800 flex items-center">
+      <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+      Back
+    </button>
+    <h2 class="text-3xl font-bold text-center text-gray-900 mb-8">Create a New Event</h2>
+    <form @submit.prevent="create" class="space-y-6">
+      <div>
+        <label for="title" class="text-sm font-medium text-gray-700">Title</label>
+        <input type="text" v-model="event.title" id="title" name="title" autocomplete="off" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label for="description" class="text-sm font-medium text-gray-700">Description</label>
+        <textarea v-model="event.description" id="description" name="description" autocomplete="off" rows="4" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="date" class="text-sm font-medium text-gray-700">Date</label>
+          <input type="date" v-model="event.date" id="date" name="date" autocomplete="off" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
         </div>
-        <div class="mb-4">
-          <label for="description" class="block text-gray-700 text-sm font-bold mb-2">Description</label>
-          <textarea v-model="event.description" id="description" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+        <div>
+          <label for="time" class="text-sm font-medium text-gray-700">Time</label>
+          <input type="time" v-model="event.time" id="time" name="time" autocomplete="off" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
         </div>
-        <div class="mb-4">
-          <label for="date" class="block text-gray-700 text-sm font-bold mb-2">Date</label>
-          <input type="date" v-model="event.date" id="date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-        </div>
-        <div class="mb-4">
-          <label for="time" class="block text-gray-700 text-sm font-bold mb-2">Time</label>
-          <input type="time" v-model="event.time" id="time" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-        </div>
-        <div class="mb-4">
-          <label for="location" class="block text-gray-700 text-sm font-bold mb-2">Location</label>
-          <input type="text" v-model="event.location" id="location" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-        </div>
-        <div class="mb-4">
-          <label for="rules" class="block text-gray-700 text-sm font-bold mb-2">Rules (comma-separated)</label>
-          <input type="text" v-model="rulesInput" id="rules" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-        </div>
-        <div class="mb-4">
-          <label for="capacity" class="block text-gray-700 text-sm font-bold mb-2">Capacity</label>
-          <input type="number" v-model.number="event.capacity" id="capacity" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required min="1">
-        </div>
-        <div class="flex items-center justify-between">
-          <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-            Create Event
-          </button>
-        </div>
-      </form>
-    </div>
+      </div>
+      <div>
+        <label for="location" class="text-sm font-medium text-gray-700">Location</label>
+        <input type="text" v-model="event.location" id="location" name="location" autocomplete="off" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label for="capacity" class="text-sm font-medium text-gray-700">Capacity</label>
+        <input type="number" v-model.number="event.capacity" id="capacity" name="capacity" autocomplete="off" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
+        <label for="rules" class="text-sm font-medium text-gray-700">Custom Rules (one per line)</label>
+        <textarea v-model="rulesInput" id="rules" name="rules" autocomplete="off" rows="4" class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+      <div>
+        <button type="submit" class="w-full py-3 px-4 font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Create Event</button>
+      </div>
+    </form>
   </div>
 </template>
 
@@ -45,6 +47,7 @@
 import { createEvent } from '../api/events';
 
 export default {
+  name: 'CreateEvent',
   data() {
     return {
       event: {
@@ -53,23 +56,20 @@ export default {
         date: '',
         time: '',
         location: '',
-        capacity: 1, // Default capacity
+        capacity: 0,
+        rules: [],
       },
-      rulesInput: '', // For comma-separated input
+      rulesInput: '',
     };
   },
   methods: {
-    async handleCreateEvent() {
+    async create() {
       try {
-        const eventData = {
-          ...this.event,
-          rules: this.rulesInput.split(',').map(rule => rule.trim()).filter(rule => rule.length > 0),
-        };
-        await createEvent(eventData);
-        alert('Event created successfully!');
-        this.$router.push('/'); // Redirect to home or event list
+        this.event.rules = this.rulesInput.split('\n').map(rule => rule.trim()).filter(rule => rule.length > 0);
+        await createEvent(this.event);
+        this.$router.push('/');
       } catch (error) {
-        alert(`Error creating event: ${error.message}`);
+        console.error(error);
       }
     },
   },
