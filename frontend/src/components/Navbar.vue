@@ -31,7 +31,7 @@
               <router-link to="/profile/edit" class="block px-4 py-2 hover:bg-gray-600">Edit Profile</router-link>
               <router-link to="/profile/settings" class="block px-4 py-2 hover:bg-gray-600">Settings</router-link>
               <div class="border-t border-gray-600 my-1"></div>
-              <button @click="handleLogout" class="block w-full text-left px-4 py-2 hover:bg-gray-600">Logout</button>
+              <button @click="logoutUser" class="block w-full text-left px-4 py-2 hover:bg-gray-600">Logout</button>
             </div>
           </div>
         </template>
@@ -99,7 +99,7 @@ export default {
         this.isProfileDropdownOpen = false;
       }
     },
-    async logout() {
+    async logoutUser() {
       try {
         await logoutUser();
         this.session.user = null;

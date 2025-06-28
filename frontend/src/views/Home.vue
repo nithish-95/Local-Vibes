@@ -19,7 +19,7 @@
             <h3 class="text-xl font-bold mb-2">{{ event.title }}</h3>
             <p class="text-gray-700 mb-4">{{ event.description }}</p>
             <div class="flex justify-between items-center">
-              <router-link :to="`/event/${event.id}`" class="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600">View Event</router-link>
+              <router-link :to="`/events/${event.id}`" class="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600">View Event</router-link>
               <span class="text-gray-600">{{ event.date }}</span>
             </div>
           </div>
