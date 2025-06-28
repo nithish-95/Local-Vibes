@@ -20,13 +20,6 @@ func NewEventHandler(eventService *services.EventService) *EventHandler {
 	return &EventHandler{EventService: eventService}
 }
 
-// sendJSONError sends a JSON error response.
-func sendJSONError(w http.ResponseWriter, message string, statusCode int) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(map[string]string{"error": message})
-}
-
 func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	sess, _ := session.Store.Get(r, "session-name")
 	userID, ok := sess.Values["user_id"].(int)
@@ -104,7 +97,8 @@ func (h *EventHandler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"message": "Event updated successfully"})
 }
 
 func (h *EventHandler) DeleteEvent(w http.ResponseWriter, r *http.Request) {
@@ -260,4 +254,23 @@ func (h *EventHandler) IsJoined(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]bool{"is_joined": isJoined})
+}
+
+func (h *EventHandler) GetJoinedEvents(w http.ResponseWriter, r *http.Request) {
+	sess, _ := session.Store.Get(r, "session-name")
+	userID, ok := sess.Values["user_id"].(int)
+	if !ok {
+		sendJSONError(w, "Not authenticated", http.StatusUnauthorized)
+		return
+	}
+
+	events, err := h.EventService.GetEventsByParticipantID(userID)
+	if err != nil {
+		log.Printf("Error getting joined events: %v", err)
+		sendJSONError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(events)
 }

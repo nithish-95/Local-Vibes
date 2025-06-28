@@ -11,5 +11,5 @@ type Event struct {
 	Capacity    int      `json:"capacity"`
 	CreatorID   int      `json:"creator_id"`
 	HostName    string   `json:"host_name,omitempty"`
-	Participants int64     `json:"participants,omitempty"`
+	Participants int64     `json:"participants"`
 }
