@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <div class="hero bg-gray-900 text-white text-center py-20">
-      <h1 v-if="session.isAuthenticated && session.user" class="text-5xl font-bold">Welcome, {{ session.user.username }}!</h1>
+      <h1 v-if="sessionStore.isAuthenticated && sessionStore.user" class="text-5xl font-bold">Welcome, {{ sessionStore.user.username }}!</h1>
       <h1 v-else class="text-5xl font-bold">Find Your Vibe</h1>
       <p class="text-xl mt-4">Discover and join local events happening near you.</p>
       <div class="mt-8">
@@ -14,7 +14,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <!-- Event Card -->
         <div v-for="event in events" :key="event.id" class="bg-white rounded-lg shadow-lg overflow-hidden">
-          <img :src="`https://picsum.photos/seed/${event.id}/400/200`" alt="Event Image" class="w-full h-48 object-cover">
+          <img :src="event.image_url || `https://picsum.photos/seed/${event.id}/400/200`" alt="Event Image" class="w-full h-48 object-cover">
           <div class="p-6">
             <h3 class="text-xl font-bold mb-2">{{ event.title }}</h3>
             <p class="text-gray-700 mb-4">{{ event.description }}</p>
@@ -31,18 +31,18 @@
 
 <script>
 import { getEvents } from '../api/events';
-import { inject } from 'vue';
+import { useSessionStore } from '../stores/session';
+import { mapStores } from 'pinia';
 
 export default {
   name: 'Home',
-  setup() {
-    const session = inject('session');
-    return { session };
-  },
   data() {
     return {
       events: [],
     };
+  },
+  computed: {
+    ...mapStores(useSessionStore),
   },
   async created() {
     this.events = await getEvents();

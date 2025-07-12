@@ -12,7 +12,7 @@
           <button class="hover:text-gray-300 focus:outline-none">Events ▼</button>
           <div class="absolute hidden group-hover:block bg-gray-700 text-white rounded-md shadow-lg py-2 z-10">
             <router-link to="/available-events" class="block px-4 py-2 hover:bg-gray-600">Available Events</router-link>
-            <template v-if="session.isAuthenticated">
+            <template v-if="sessionStore.isAuthenticated">
               <router-link to="/hosted-events" class="block px-4 py-2 hover:bg-gray-600">Hosted Events</router-link>
               <router-link to="/create-event" class="block px-4 py-2 hover:bg-gray-600">Create Event</router-link>
               <router-link to="/joined-events" class="block px-4 py-2 hover:bg-gray-600">Joined Events</router-link>
@@ -20,11 +20,11 @@
           </div>
         </div>
 
-        <template v-if="session.isAuthenticated">
+        <template v-if="sessionStore.isAuthenticated">
           <!-- Profile Dropdown -->
           <div class="relative" ref="profileDropdown">
             <button @click="toggleProfileDropdown" class="flex items-center space-x-1 hover:text-gray-300 focus:outline-none">
-              <span v-if="session.user">Welcome, {{ session.user.username }}!</span>
+              <span v-if="sessionStore.user">Welcome, {{ sessionStore.user.username }}!</span>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
             <div v-if="isProfileDropdownOpen" class="absolute right-0 mt-2 w-48 bg-gray-700 text-white rounded-md shadow-lg py-2 z-20">
@@ -55,12 +55,12 @@
     <div v-if="isMobileMenuOpen" class="md:hidden bg-gray-800 py-2">
       <router-link to="/" class="block px-4 py-2 hover:bg-gray-700" @click="isMobileMenuOpen = false">Home</router-link>
       <router-link to="/available-events" class="block px-4 py-2 hover:bg-gray-700" @click="isMobileMenuOpen = false">Available Events</router-link>
-      <template v-if="session.isAuthenticated">
+      <template v-if="sessionStore.isAuthenticated">
         <router-link to="/hosted-events" class="block px-4 py-2 hover:bg-gray-700" @click="isMobileMenuOpen = false">Hosted Events</router-link>
         <router-link to="/create-event" class="block px-4 py-2 hover:bg-gray-700" @click="isMobileMenuOpen = false">Create Event</router-link>
         <router-link to="/joined-events" class="block px-4 py-2 hover:bg-gray-700" @click="isMobileMenuOpen = false">Joined Events</router-link>
         <div class="border-t border-gray-700 my-2"></div>
-        <span v-if="session.user" class="block px-4 py-2 text-white">Welcome, {{ session.user.username }}!</span>
+        <span v-if="sessionStore.user" class="block px-4 py-2 text-white">Welcome, {{ sessionStore.user.username }}!</span>
         <router-link to="/profile/edit" class="block px-4 py-2 hover:bg-gray-700" @click="isMobileMenuOpen = false">Edit Profile</router-link>
         <router-link to="/profile/settings" class="block px-4 py-2 hover:bg-gray-700" @click="isMobileMenuOpen = false">Settings</router-link>
         <button @click="logoutUser" class="block w-full text-left px-4 py-2 hover:bg-gray-700">Logout</button>
@@ -74,17 +74,19 @@
 </template>
 
 <script>
-import { logoutUser } from '../api/auth';
-import { session } from '../session';
+import { useSessionStore } from '../stores/session';
+import { mapStores } from 'pinia';
 
 export default {
   name: 'Navbar',
   data() {
     return {
-      session: session,
       isMobileMenuOpen: false,
       isProfileDropdownOpen: false,
     };
+  },
+  computed: {
+    ...mapStores(useSessionStore),
   },
   methods: {
     toggleMobileMenu() {
@@ -101,9 +103,7 @@ export default {
     },
     async logoutUser() {
       try {
-        await logoutUser();
-        this.session.user = null;
-        this.session.isAuthenticated = false;
+        await this.sessionStore.logout();
         this.$router.push('/login');
         this.isMobileMenuOpen = false; // Close mobile menu on logout
         this.isProfileDropdownOpen = false; // Close profile dropdown on logout

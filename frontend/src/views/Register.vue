@@ -8,8 +8,8 @@
       <h2 class="text-3xl font-bold text-center text-gray-900">Create a New Account</h2>
       <form @submit.prevent="register" class="space-y-6">
         <div>
-          <label for="username" class="text-sm font-medium text-gray-700">Username</label>
-          <input type="text" v-model="username" id="username" name="username" autocomplete="username" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <label for="email" class="text-sm font-medium text-gray-700">Email</label>
+          <input type="email" v-model="email" id="email" name="email" autocomplete="email" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
         </div>
         <div>
           <label for="password" class="text-sm font-medium text-gray-700">Password</label>
@@ -34,17 +34,19 @@ export default {
   name: 'Register',
   data() {
     return {
-      username: '',
+      email: '',
       password: '',
     };
   },
   methods: {
     async register() {
       try {
-        await registerUser(this.username, this.password);
+        await registerUser(this.email, this.password);
+        alert('Registration successful! Please check your email to verify your account.');
         this.$router.push('/login');
       } catch (error) {
         console.error(error);
+        alert('Registration failed: ' + error.message);
       }
     },
   },

@@ -33,6 +33,10 @@
         <input type="number" v-model.number="event.capacity" id="capacity" name="capacity" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
       <div>
+        <label for="image_url" class="text-sm font-medium text-gray-700">Event Image URL (Optional)</label>
+        <input type="url" v-model="event.image_url" id="image_url" name="image_url" autocomplete="off" class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div>
         <label for="rules" class="text-sm font-medium text-gray-700">Custom Rules (one per line)</label>
         <textarea v-model="rulesInput" id="rules" name="rules" rows="4" class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
       </div>

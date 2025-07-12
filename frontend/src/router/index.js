@@ -1,68 +1,70 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import Home from '../views/Home.vue';
-import Login from '../views/Login.vue';
-import Register from '../views/Register.vue';
-import CreateEvent from '../views/CreateEvent.vue';
-import AvailableEvents from '../views/AvailableEvents.vue';
-import HostedEvents from '../views/HostedEvents.vue';
-import JoinedEvents from '../views/JoinedEvents.vue';
-import EventDetails from '../views/EventDetails.vue';
-import EditEvent from '../views/EditEvent.vue';
-import { getCurrentUser } from '../api/auth';
-import { session } from '../session';
+import { useSessionStore } from '../stores/session';
 
 const routes = [
   {
     path: '/',
     name: 'Home',
-    component: Home,
+    component: () => import('../views/Home.vue'),
   },
   {
     path: '/login',
     name: 'Login',
-    component: Login,
+    component: () => import('../views/Login.vue'),
   },
   {
     path: '/register',
     name: 'Register',
-    component: Register,
+    component: () => import('../views/Register.vue'),
   },
   {
     path: '/create-event',
     name: 'CreateEvent',
-    component: CreateEvent,
+    component: () => import('../views/CreateEvent.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/available-events',
     name: 'AvailableEvents',
-    component: AvailableEvents,
+    component: () => import('../views/AvailableEvents.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/hosted-events',
     name: 'HostedEvents',
-    component: HostedEvents,
+    component: () => import('../views/HostedEvents.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/joined-events',
     name: 'JoinedEvents',
-    component: JoinedEvents,
+    component: () => import('../views/JoinedEvents.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/events/:id',
     name: 'EventDetails',
-    component: EventDetails,
+    component: () => import('../views/EventDetails.vue'),
     props: true,
     meta: { requiresAuth: true },
   },
   {
     path: '/edit-event/:id',
     name: 'EditEvent',
-    component: EditEvent,
+    component: () => import('../views/EditEvent.vue'),
     props: true,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/profile/edit',
+    name: 'EditProfile',
+    component: () => import('../views/EditProfile.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/profile/settings',
+    name: 'ProfileSettings',
+    component: () => import('../views/ProfileSettings.vue'),
     meta: { requiresAuth: true },
   },
 ];
@@ -73,21 +75,12 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  if (!session.isAuthenticated && !session.user) {
-    try {
-      const user = await getCurrentUser();
-      if (user && user.id) {
-        session.user = user;
-        session.isAuthenticated = true;
-      }
-    } catch (error) {
-      console.error("Error fetching current user in router guard:", error);
-      session.user = null;
-      session.isAuthenticated = false;
-    }
+  const sessionStore = useSessionStore();
+  if (!sessionStore.isAuthenticated && !sessionStore.user) {
+    await sessionStore.initializeSession();
   }
 
-  if (to.meta.requiresAuth && !session.isAuthenticated) {
+  if (to.meta.requiresAuth && !sessionStore.isAuthenticated) {
     next('/login');
   } else {
     next();
