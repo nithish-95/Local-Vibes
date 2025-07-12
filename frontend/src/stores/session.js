@@ -11,7 +11,7 @@ export const useSessionStore = defineStore('session', {
     async initializeSession() {
       try {
         const user = await getCurrentUser();
-        if (user && user.id) {
+        if (user) {
           this.user = user;
           this.isAuthenticated = true;
         } else {
@@ -23,7 +23,9 @@ export const useSessionStore = defineStore('session', {
     },
     async login(username, password) {
       const user = await loginUser(username, password);
-      await this.initializeSession();
+      // Supabase's signInWithPassword automatically sets the session, so we just need to update our store's state
+      this.user = user;
+      this.isAuthenticated = true;
       return user;
     },
     async logout() {

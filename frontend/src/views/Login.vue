@@ -8,8 +8,8 @@
       <h2 class="text-3xl font-bold text-center text-gray-900">Login to Your Account</h2>
       <form @submit.prevent="login" class="space-y-6">
         <div>
-          <label for="username" class="text-sm font-medium text-gray-700">Username</label>
-          <input type="text" v-model="username" id="username" name="username" autocomplete="username" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <label for="email" class="text-sm font-medium text-gray-700">Email</label>
+          <input type="email" v-model="email" id="email" name="email" autocomplete="email" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
         </div>
         <div>
           <label for="password" class="text-sm font-medium text-gray-700">Password</label>
@@ -34,7 +34,7 @@ export default {
   name: 'Login',
   data() {
     return {
-      username: '',
+      email: '',
       password: '',
     };
   },
@@ -42,7 +42,7 @@ export default {
     async login() {
       try {
         const sessionStore = useSessionStore();
-        await sessionStore.login(this.username, this.password);
+        await sessionStore.login(this.email, this.password);
         this.$router.push('/');
       } catch (error) {
         console.error('Login failed:', error);

@@ -24,7 +24,7 @@
           <!-- Profile Dropdown -->
           <div class="relative" ref="profileDropdown">
             <button @click="toggleProfileDropdown" class="flex items-center space-x-1 hover:text-gray-300 focus:outline-none">
-              <span v-if="sessionStore.user">Welcome, {{ sessionStore.user.username }}!</span>
+              <span v-if="sessionStore.user">Welcome, {{ sessionStore.user.email }}!</span>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
             <div v-if="isProfileDropdownOpen" class="absolute right-0 mt-2 w-48 bg-gray-700 text-white rounded-md shadow-lg py-2 z-20">
@@ -60,7 +60,7 @@
         <router-link to="/create-event" class="block px-4 py-2 hover:bg-gray-700" @click="isMobileMenuOpen = false">Create Event</router-link>
         <router-link to="/joined-events" class="block px-4 py-2 hover:bg-gray-700" @click="isMobileMenuOpen = false">Joined Events</router-link>
         <div class="border-t border-gray-700 my-2"></div>
-        <span v-if="sessionStore.user" class="block px-4 py-2 text-white">Welcome, {{ sessionStore.user.username }}!</span>
+        <span v-if="sessionStore.user" class="block px-4 py-2 text-white">Welcome, {{ sessionStore.user.email }}!</span>
         <router-link to="/profile/edit" class="block px-4 py-2 hover:bg-gray-700" @click="isMobileMenuOpen = false">Edit Profile</router-link>
         <router-link to="/profile/settings" class="block px-4 py-2 hover:bg-gray-700" @click="isMobileMenuOpen = false">Settings</router-link>
         <button @click="logoutUser" class="block w-full text-left px-4 py-2 hover:bg-gray-700">Logout</button>

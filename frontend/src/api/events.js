@@ -1,197 +1,309 @@
-const API_BASE_URL = '/api';
+import { supabase } from '../supabase';
 
 export async function createEvent(eventData) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/events`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(eventData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to create event');
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error('Error creating event:', error);
-    throw error;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User not authenticated.');
   }
+
+  const { rules, ...rest } = eventData;
+  const eventToInsert = {
+    ...rest,
+    rules: rules || [], // Ensure rules is an array, even if empty
+    creator_id: user.id,
+  };
+
+  const { data, error } = await supabase
+    .from('events')
+    .insert([eventToInsert])
+    .select();
+
+  if (error) {
+    console.error('Supabase createEvent error:', error);
+    throw new Error(error.message);
+  }
+
+  // Automatically add the creator as a participant
+  const { error: participantError } = await supabase
+    .from('event_participants')
+    .insert([{ event_id: data[0].id, user_id: user.id }]);
+
+  if (participantError) {
+    console.warn('Supabase auto-add participant warning:', participantError);
+    // Log the error but don't fail the event creation if adding participant fails
+  }
+
+  return data[0];
 }
 
 export async function getEvents() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/events`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch events');
-    }
-    const data = await response.json();
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching events:', error);
-    throw error;
+  const { data, error } = await supabase
+    .from('event_with_participant_count')
+    .select(`
+      *,
+      creator:profiles(username)
+    `);
+
+  if (error) {
+    console.error('Supabase getEvents error:', error);
+    throw new Error(error.message);
   }
+
+  // Map data to match existing frontend structure (e.g., host_name)
+  return data.map(event => ({
+    ...event,
+    host_name: event.creator ? event.creator.username : 'Unknown',
+    participants: event.participants_count, // Use the count from the view
+  }));
 }
 
 export async function updateEvent(eventID, eventData) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/events/${eventID}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(eventData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to update event');
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error('Error updating event:', error);
-    throw error;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User not authenticated.');
   }
+
+  const { rules, ...rest } = eventData;
+  const eventToUpdate = {
+    ...rest,
+    rules: rules || [],
+  };
+
+  const { data, error } = await supabase
+    .from('events')
+    .update(eventToUpdate)
+    .eq('id', eventID)
+    .eq('creator_id', user.id) // Ensure only creator can update
+    .select();
+
+  if (error) {
+    console.error('Supabase updateEvent error:', error);
+    throw new Error(error.message);
+  }
+  return data[0];
 }
 
 export async function deleteEvent(eventID) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/events/${eventID}`, {
-      method: 'DELETE',
-    });
-
-    if (!response.ok) {
-      // If the response is 204 No Content, it's still a success
-      if (response.status === 204) {
-        return {}; // Return an empty object or null to indicate success
-      }
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to delete event');
-    }
-
-    // Only try to parse JSON if there's content
-    if (response.headers.get('content-length') > 0) {
-      return response.json();
-    } else {
-      return {}; // No content to parse
-    }
-  } catch (error) {
-    console.error('Error deleting event:', error);
-    throw error;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User not authenticated.');
   }
+
+  const { error } = await supabase
+    .from('events')
+    .delete()
+    .eq('id', eventID)
+    .eq('creator_id', user.id); // Ensure only creator can delete
+
+  if (error) {
+    console.error('Supabase deleteEvent error:', error);
+    throw new Error(error.message);
+  }
+  return {};
 }
 
 export async function getHostedEvents() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/events/hosted`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch hosted events');
-    }
-    const data = await response.json();
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching hosted events:', error);
-    throw error;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User not authenticated.');
   }
+
+  const { data, error } = await supabase
+    .from('event_with_participant_count')
+    .select(`
+      *,
+      creator:profiles(username)
+    `)
+    .eq('creator_id', user.id);
+
+  if (error) {
+    console.error('Supabase getHostedEvents error:', error);
+    throw new Error(error.message);
+  }
+
+  return data.map(event => ({
+    ...event,
+    host_name: event.creator ? event.creator.username : 'Unknown',
+    participants: event.participants_count, // Use the count from the view
+  }));
 }
 
 export async function getAvailableEvents() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/events/available`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch available events');
-    }
-    const data = await response.json();
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching available events:', error);
-    throw error;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User not authenticated.');
   }
+
+  const { data, error } = await supabase
+    .from('event_with_participant_count')
+    .select(`
+      *,
+      creator:profiles(username)
+    `)
+    .neq('creator_id', user.id); // Not equal to current user's ID
+
+  if (error) {
+    console.error('Supabase getAvailableEvents error:', error);
+    throw new Error(error.message);
+  }
+
+  return data.map(event => ({
+    ...event,
+    host_name: event.creator ? event.creator.username : 'Unknown',
+    participants: event.participants_count, // Use the count from the view
+  }));
 }
 
 export async function getEventByID(eventID) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/events/${eventID}`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch event by ID');
-    }
-    return response.json();
-  } catch (error) {
-    console.error('Error fetching event by ID:', error);
-    throw error;
+  const { data, error } = await supabase
+    .from('event_with_participant_count')
+    .select(`
+      *,
+      creator:profiles(username)
+    `)
+    .eq('id', eventID)
+    .single(); // Expecting a single record
+
+  if (error) {
+    console.error('Supabase getEventByID error:', error);
+    throw new Error(error.message);
   }
+
+  return {
+    ...data,
+    host_name: data.creator ? data.creator.username : 'Unknown',
+    participants: data.participants_count, // Use the count from the view
+  };
 }
 
 export async function joinEvent(eventID) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/events/${eventID}/join`, {
-      method: 'POST',
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to join event');
-    }
-
-    return {}; // No content expected
-  } catch (error) {
-    console.error('Error joining event:', error);
-    throw error;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User not authenticated.');
   }
+
+  // Check if already joined
+  const { data: existingParticipant, error: checkError } = await supabase
+    .from('event_participants')
+    .select('*')
+    .eq('event_id', eventID)
+    .eq('user_id', user.id);
+
+  if (checkError) {
+    console.error('Supabase joinEvent check error:', checkError);
+    throw new Error(checkError.message);
+  }
+
+  if (existingParticipant && existingParticipant.length > 0) {
+    throw new Error('User is already a participant in this event');
+  }
+
+  // Check capacity (requires RLS or a function on Supabase)
+  // For now, this is a basic check. A more robust solution would involve a Supabase Function or RLS.
+  const { data: eventData, error: eventError } = await supabase
+    .from('events')
+    .select('capacity')
+    .eq('id', eventID)
+    .single();
+
+  if (eventError) {
+    console.error('Supabase joinEvent event data error:', eventError);
+    throw new Error(eventError.message);
+  }
+
+  const { count, error: countError } = await supabase
+    .from('event_participants')
+    .select('*', { count: 'exact', head: true })
+    .eq('event_id', eventID);
+
+  if (countError) {
+    console.error('Supabase joinEvent count error:', countError);
+    throw new Error(countError.message);
+  }
+
+  if (eventData.capacity > 0 && count >= eventData.capacity) {
+    throw new Error('Event is full');
+  }
+
+  const { error } = await supabase
+    .from('event_participants')
+    .insert([{ event_id: eventID, user_id: user.id }]);
+
+  if (error) {
+    console.error('Supabase joinEvent insert error:', error);
+    throw new Error(error.message);
+  }
+  return {};
 }
 
 export async function leaveEvent(eventID) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/events/${eventID}/leave`, {
-      method: 'POST',
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to leave event');
-    }
-
-    return {}; // No content expected
-  } catch (error) {
-    console.error('Error leaving event:', error);
-    throw error;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User not authenticated.');
   }
+
+  const { error, count } = await supabase
+    .from('event_participants')
+    .delete()
+    .eq('event_id', eventID)
+    .eq('user_id', user.id)
+    .select(); // Use select to get count of affected rows
+
+  if (error) {
+    console.error('Supabase leaveEvent error:', error);
+    throw new Error(error.message);
+  }
+
+  if (count === 0) {
+    throw new Error('User was not a participant in this event');
+  }
+  return {};
 }
 
 export async function checkIfJoined(eventID) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/events/${eventID}/is-joined`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to check join status');
-    }
-    const data = await response.json();
-    return data.is_joined;
-  } catch (error) {
-    console.error('Error checking join status:', error);
-    throw error;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    // If not authenticated, they can't be joined
+    return false;
   }
+
+  const { data, error } = await supabase
+    .from('event_participants')
+    .select('*')
+    .eq('event_id', eventID)
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error('Supabase checkIfJoined error:', error);
+    throw new Error(error.message);
+  }
+  return data.length > 0;
 }
 
 export async function getJoinedEvents() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/events/joined`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch joined events');
-    }
-    const data = await response.json();
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching joined events:', error);
-    throw error;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User not authenticated.');
   }
+
+  const { data, error } = await supabase
+    .from('event_participants')
+    .select(`
+      event:event_with_participant_count(*,
+        creator:profiles(username)
+      )
+    `)
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error('Supabase getJoinedEvents error:', error);
+    throw new Error(error.message);
+  }
+
+  // Extract the event objects from the nested structure
+  return data.map(item => ({
+    ...item.event,
+    host_name: item.event.creator ? item.event.creator.username : 'Unknown',
+    participants: item.event.participants_count, // Use the count from the view
+  }));
 }
