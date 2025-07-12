@@ -129,19 +129,25 @@ export async function getHostedEvents() {
   }));
 }
 
-export async function getAvailableEvents() {
+export async function getAvailableEvents(searchQuery = '') {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     throw new Error('User not authenticated.');
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('event_with_participant_count')
     .select(`
       *,
       creator_username
     `)
     .neq('creator_id', user.id); // Not equal to current user's ID
+
+  if (searchQuery) {
+    query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Supabase getAvailableEvents error:', error);
