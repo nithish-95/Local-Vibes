@@ -1,6 +1,7 @@
 
 import { defineStore } from 'pinia';
 import { getCurrentUser, loginUser, logoutUser as apiLogout } from '../api/auth';
+import { supabase } from '../supabase';
 
 export const useSessionStore = defineStore('session', {
   state: () => ({
@@ -10,23 +11,49 @@ export const useSessionStore = defineStore('session', {
   actions: {
     async initializeSession() {
       try {
-        const user = await getCurrentUser();
+        const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          this.user = user;
+          // Fetch profile to get the username
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', user.id)
+            .single();
+
+          if (profileError) {
+            console.error('Error fetching user profile:', profileError);
+            this.clearSession();
+            return;
+          }
+
+          this.user = { ...user, username: profile.username }; // Attach username to user object
           this.isAuthenticated = true;
         } else {
           this.clearSession();
         }
       } catch (error) {
+        console.error('Error initializing session:', error);
         this.clearSession();
       }
     },
-    async login(username, password) {
-      const user = await loginUser(username, password);
-      // Supabase's signInWithPassword automatically sets the session, so we just need to update our store's state
-      this.user = user;
+    async login(email, password) {
+      const user = await loginUser(email, password);
+      // After successful login, fetch the profile to get the username
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching user profile after login:', profileError);
+        this.clearSession();
+        throw profileError; // Re-throw to indicate login failure due to profile issue
+      }
+
+      this.user = { ...user, username: profile.username }; // Attach username to user object
       this.isAuthenticated = true;
-      return user;
+      return this.user;
     },
     async logout() {
       await apiLogout();
