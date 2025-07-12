@@ -13,6 +13,9 @@ export async function createEvent(eventData) {
     creator_id: user.id,
   };
 
+  console.log('User ID for event creation:', user.id);
+  console.log('Event data to insert:', eventToInsert);
+
   const { data, error } = await supabase
     .from('events')
     .insert([eventToInsert])
@@ -41,7 +44,7 @@ export async function getEvents() {
     .from('event_with_participant_count')
     .select(`
       *,
-      creator:profiles(username)
+      creator_username
     `);
 
   if (error) {
@@ -52,7 +55,7 @@ export async function getEvents() {
   // Map data to match existing frontend structure (e.g., host_name)
   return data.map(event => ({
     ...event,
-    host_name: event.creator ? event.creator.username : 'Unknown',
+    host_name: event.creator_username || 'Unknown',
     participants: event.participants_count, // Use the count from the view
   }));
 }
@@ -69,18 +72,16 @@ export async function updateEvent(eventID, eventData) {
     rules: rules || [],
   };
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('events')
     .update(eventToUpdate)
-    .eq('id', eventID)
-    .eq('creator_id', user.id) // Ensure only creator can update
-    .select();
+    .eq('id', eventID); // Only filter by ID, RLS handles creator_id check
 
   if (error) {
     console.error('Supabase updateEvent error:', error);
     throw new Error(error.message);
   }
-  return data[0];
+  return {}; // Return an empty object on success
 }
 
 export async function deleteEvent(eventID) {
@@ -112,7 +113,7 @@ export async function getHostedEvents() {
     .from('event_with_participant_count')
     .select(`
       *,
-      creator:profiles(username)
+      creator_username
     `)
     .eq('creator_id', user.id);
 
@@ -123,7 +124,7 @@ export async function getHostedEvents() {
 
   return data.map(event => ({
     ...event,
-    host_name: event.creator ? event.creator.username : 'Unknown',
+    host_name: event.creator_username || 'Unknown',
     participants: event.participants_count, // Use the count from the view
   }));
 }
@@ -138,7 +139,7 @@ export async function getAvailableEvents() {
     .from('event_with_participant_count')
     .select(`
       *,
-      creator:profiles(username)
+      creator_username
     `)
     .neq('creator_id', user.id); // Not equal to current user's ID
 
@@ -149,7 +150,7 @@ export async function getAvailableEvents() {
 
   return data.map(event => ({
     ...event,
-    host_name: event.creator ? event.creator.username : 'Unknown',
+    host_name: event.creator_username || 'Unknown',
     participants: event.participants_count, // Use the count from the view
   }));
 }
@@ -159,7 +160,7 @@ export async function getEventByID(eventID) {
     .from('event_with_participant_count')
     .select(`
       *,
-      creator:profiles(username)
+      creator_username
     `)
     .eq('id', eventID)
     .single(); // Expecting a single record
@@ -171,7 +172,7 @@ export async function getEventByID(eventID) {
 
   return {
     ...data,
-    host_name: data.creator ? data.creator.username : 'Unknown',
+    host_name: data.creator_username || 'Unknown',
     participants: data.participants_count, // Use the count from the view
   };
 }
@@ -290,7 +291,7 @@ export async function getJoinedEvents() {
     .from('event_participants')
     .select(`
       event:event_with_participant_count(*,
-        creator:profiles(username)
+        creator_username
       )
     `)
     .eq('user_id', user.id);
@@ -303,7 +304,7 @@ export async function getJoinedEvents() {
   // Extract the event objects from the nested structure
   return data.map(item => ({
     ...item.event,
-    host_name: item.event.creator ? item.event.creator.username : 'Unknown',
+    host_name: item.event.creator_username || 'Unknown',
     participants: item.event.participants_count, // Use the count from the view
   }));
 }
