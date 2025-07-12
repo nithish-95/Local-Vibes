@@ -28,8 +28,7 @@
 </template>
 
 <script>
-import { loginUser } from '../api/auth';
-import { initializeSession } from '../session';
+import { useSessionStore } from '../stores/session';
 
 export default {
   name: 'Login',
@@ -42,8 +41,8 @@ export default {
   methods: {
     async login() {
       try {
-        await loginUser(this.username, this.password);
-        await initializeSession(); // This will fetch the user and update the reactive session object
+        const sessionStore = useSessionStore();
+        await sessionStore.login(this.username, this.password);
         this.$router.push('/');
       } catch (error) {
         console.error('Login failed:', error);

@@ -11,8 +11,7 @@
 <script>
 import Navbar from './components/Navbar.vue';
 import Footer from './components/Footer.vue';
-import { session, initializeSession } from './session';
-import { provide } from 'vue';
+import { useSessionStore } from './stores/session';
 
 export default {
   name: 'App',
@@ -21,10 +20,9 @@ export default {
     Footer,
   },
   setup() {
+    const sessionStore = useSessionStore();
     // Initialize session on app startup
-    initializeSession();
-    // Provide the reactive session object to all descendants
-    provide('session', session);
+    sessionStore.initializeSession();
   },
 };
 </script>
