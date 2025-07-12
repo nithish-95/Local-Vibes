@@ -33,8 +33,8 @@
         <input type="number" v-model.number="event.capacity" id="capacity" name="capacity" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
       <div>
-        <label for="image" class="text-sm font-medium text-gray-700">Event Image</label>
-        <input type="file" @change="onFileChange" id="image" name="image" accept="image/*" class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <label for="image_url" class="text-sm font-medium text-gray-700">Event Image URL (Optional)</label>
+        <input type="url" v-model="event.image_url" id="image_url" name="image_url" autocomplete="off" class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
       <div>
         <label for="rules" class="text-sm font-medium text-gray-700">Custom Rules (one per line)</label>
@@ -57,7 +57,6 @@ export default {
     return {
       event: {},
       rulesInput: '',
-      selectedFile: null,
     };
   },
   async created() {
@@ -71,27 +70,10 @@ export default {
     }
   },
   methods: {
-    onFileChange(e) {
-      this.selectedFile = e.target.files[0];
-    },
     async update() {
       try {
         this.event.rules = this.rulesInput.split('\n').map(rule => rule.trim()).filter(rule => rule.length > 0);
-        
-        const formData = new FormData();
-        Object.keys(this.event).forEach(key => {
-          if (key === 'rules') {
-            formData.append(key, JSON.stringify(this.event[key]));
-          } else {
-            formData.append(key, this.event[key]);
-          }
-        });
-
-        if (this.selectedFile) {
-          formData.append('image', this.selectedFile);
-        }
-
-        await updateEvent(this.id, formData);
+        await updateEvent(this.id, this.event);
         alert('Event updated successfully!');
         this.$router.push('/');
       } catch (error) {

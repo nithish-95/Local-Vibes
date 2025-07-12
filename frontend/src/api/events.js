@@ -1,10 +1,13 @@
 const API_BASE_URL = '/api';
 
-export async function createEvent(formData) {
+export async function createEvent(eventData) {
   try {
     const response = await fetch(`${API_BASE_URL}/events`, {
       method: 'POST',
-      body: formData,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(eventData),
     });
 
     if (!response.ok) {
@@ -34,11 +37,14 @@ export async function getEvents() {
   }
 }
 
-export async function updateEvent(eventID, formData) {
+export async function updateEvent(eventID, eventData) {
   try {
     const response = await fetch(`${API_BASE_URL}/events/${eventID}`, {
       method: 'PUT',
-      body: formData,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(eventData),
     });
 
     if (!response.ok) {

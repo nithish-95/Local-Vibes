@@ -2,11 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -31,52 +28,10 @@ func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse multipart form data
-	err := r.ParseMultipartForm(10 << 20) // 10 MB limit
-	if err != nil {
-		sendJSONError(w, "Failed to parse multipart form: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	var event models.Event
-	event.Title = r.FormValue("title")
-	event.Description = r.FormValue("description")
-	event.Date = r.FormValue("date")
-	event.Time = r.FormValue("time")
-	event.Location = r.FormValue("location")
-	event.Capacity, _ = strconv.Atoi(r.FormValue("capacity"))
-
-	// Handle rules (JSON string from frontend)
-	rulesJSON := r.FormValue("rules")
-	if rulesJSON != "" {
-		err = json.Unmarshal([]byte(rulesJSON), &event.Rules)
-		if err != nil {
-			sendJSONError(w, "Invalid rules format: "+err.Error(), http.StatusBadRequest)
-			return
-		}
-	}
-
-	// Handle image upload
-	file, handler, err := r.FormFile("image")
-	if err == nil {
-		defer file.Close()
-
-		uploadDir := "./uploads"
-		if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
-			os.Mkdir(uploadDir, 0755)
-		}
-
-		filePath := filepath.Join(uploadDir, handler.Filename)
-		f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0666)
-		if err != nil {
-			sendJSONError(w, "Failed to save image: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer f.Close()
-		io.Copy(f, file)
-		event.ImageURL = "/uploads/" + handler.Filename // Store relative path
-	} else if err != http.ErrMissingFile {
-		sendJSONError(w, "Error retrieving image file: "+err.Error(), http.StatusBadRequest)
+	err := json.NewDecoder(r.Body).Decode(&event)
+	if err != nil {
+		sendJSONError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -118,52 +73,10 @@ func (h *EventHandler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse multipart form data
-	err = r.ParseMultipartForm(10 << 20) // 10 MB limit
-	if err != nil {
-		sendJSONError(w, "Failed to parse multipart form: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	var event models.Event
-	event.Title = r.FormValue("title")
-	event.Description = r.FormValue("description")
-	event.Date = r.FormValue("date")
-	event.Time = r.FormValue("time")
-	event.Location = r.FormValue("location")
-	event.Capacity, _ = strconv.Atoi(r.FormValue("capacity"))
-
-	// Handle rules (JSON string from frontend)
-	rulesJSON := r.FormValue("rules")
-	if rulesJSON != "" {
-		err = json.Unmarshal([]byte(rulesJSON), &event.Rules)
-		if err != nil {
-			sendJSONError(w, "Invalid rules format: "+err.Error(), http.StatusBadRequest)
-			return
-		}
-	}
-
-	// Handle image upload
-	file, handler, err := r.FormFile("image")
-	if err == nil {
-		defer file.Close()
-
-		uploadDir := "./uploads"
-		if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
-			os.Mkdir(uploadDir, 0755)
-		}
-
-		filePath := filepath.Join(uploadDir, handler.Filename)
-		f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0666)
-		if err != nil {
-			sendJSONError(w, "Failed to save image: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer f.Close()
-		io.Copy(f, file)
-		event.ImageURL = "/uploads/" + handler.Filename // Store relative path
-	} else if err != http.ErrMissingFile {
-		sendJSONError(w, "Error retrieving image file: "+err.Error(), http.StatusBadRequest)
+	err = json.NewDecoder(r.Body).Decode(&event)
+	if err != nil {
+		sendJSONError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
