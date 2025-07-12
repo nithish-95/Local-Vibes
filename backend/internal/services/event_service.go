@@ -23,7 +23,7 @@ func (s *EventService) CreateEvent(event *models.Event) (int64, error) {
 		return 0, fmt.Errorf("failed to marshal rules: %w", err)
 	}
 
-	query := `INSERT INTO events (title, description, date, time, location, rules, capacity, creator_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO events (title, description, date, time, location, rules, capacity, image_url, creator_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	result, err := s.DB.Exec(query,
 		event.Title,
 		event.Description,
@@ -32,6 +32,7 @@ func (s *EventService) CreateEvent(event *models.Event) (int64, error) {
 		event.Location,
 		string(rulesJSON),
 		event.Capacity,
+		event.ImageURL,
 		event.CreatorID,
 	)
 	if err != nil {
@@ -54,7 +55,7 @@ func (s *EventService) CreateEvent(event *models.Event) (int64, error) {
 }
 
 func (s *EventService) GetEvents() ([]models.Event, error) {
-	rows, err := s.DB.Query("SELECT e.id, e.title, e.description, e.date, e.time, e.location, e.rules, e.capacity, e.creator_id, u.username, COALESCE(COUNT(ep.user_id), 0) FROM events e JOIN users u ON e.creator_id = u.id LEFT JOIN event_participants ep ON e.id = ep.event_id GROUP BY e.id")
+	rows, err := s.DB.Query("SELECT e.id, e.title, e.description, e.date, e.time, e.location, e.rules, e.capacity, e.creator_id, e.image_url, u.username, COALESCE(COUNT(ep.user_id), 0) FROM events e JOIN users u ON e.creator_id = u.id LEFT JOIN event_participants ep ON e.id = ep.event_id GROUP BY e.id")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get events: %w", err)
 	}
@@ -65,7 +66,7 @@ func (s *EventService) GetEvents() ([]models.Event, error) {
 		var event models.Event
 		var rulesJSON string
 		var hostName string
-		if err := rows.Scan(&event.ID, &event.Title, &event.Description, &event.Date, &event.Time, &event.Location, &rulesJSON, &event.Capacity, &event.CreatorID, &hostName, &event.Participants); err != nil {
+		if err := rows.Scan(&event.ID, &event.Title, &event.Description, &event.Date, &event.Time, &event.Location, &rulesJSON, &event.Capacity, &event.CreatorID, &event.ImageURL, &hostName, &event.Participants); err != nil {
 			return nil, fmt.Errorf("failed to scan event: %w", err)
 		}
 
@@ -85,7 +86,7 @@ func (s *EventService) UpdateEvent(event *models.Event) error {
 		return fmt.Errorf("failed to marshal rules: %w", err)
 	}
 
-	query := `UPDATE events SET title = ?, description = ?, date = ?, time = ?, location = ?, rules = ?, capacity = ? WHERE id = ?`
+	query := `UPDATE events SET title = ?, description = ?, date = ?, time = ?, location = ?, rules = ?, capacity = ?, image_url = ? WHERE id = ?`
 	_, err = s.DB.Exec(query,
 		event.Title,
 		event.Description,
@@ -94,6 +95,7 @@ func (s *EventService) UpdateEvent(event *models.Event) error {
 		event.Location,
 		string(rulesJSON),
 		event.Capacity,
+		event.ImageURL,
 		event.ID,
 	)
 	if err != nil {
@@ -115,8 +117,8 @@ func (s *EventService) GetEventByID(eventID int) (*models.Event, error) {
 	var event models.Event
 	var rulesJSON string
 	var hostName string
-	query := `SELECT e.id, e.title, e.description, e.date, e.time, e.location, e.rules, e.capacity, e.creator_id, u.username, COALESCE(COUNT(ep.user_id), 0) FROM events e JOIN users u ON e.creator_id = u.id LEFT JOIN event_participants ep ON e.id = ep.event_id WHERE e.id = ? GROUP BY e.id`
-	err := s.DB.QueryRow(query, eventID).Scan(&event.ID, &event.Title, &event.Description, &event.Date, &event.Time, &event.Location, &rulesJSON, &event.Capacity, &event.CreatorID, &hostName, &event.Participants)
+	query := `SELECT e.id, e.title, e.description, e.date, e.time, e.location, e.rules, e.capacity, e.creator_id, e.image_url, u.username, COALESCE(COUNT(ep.user_id), 0) FROM events e JOIN users u ON e.creator_id = u.id LEFT JOIN event_participants ep ON e.id = ep.event_id WHERE e.id = ? GROUP BY e.id`
+	err := s.DB.QueryRow(query, eventID).Scan(&event.ID, &event.Title, &event.Description, &event.Date, &event.Time, &event.Location, &rulesJSON, &event.Capacity, &event.CreatorID, &event.ImageURL, &hostName, &event.Participants)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("event not found")
@@ -132,7 +134,7 @@ func (s *EventService) GetEventByID(eventID int) (*models.Event, error) {
 }
 
 func (s *EventService) GetEventsByCreatorID(creatorID int) ([]models.Event, error) {
-	rows, err := s.DB.Query("SELECT e.id, e.title, e.description, e.date, e.time, e.location, e.rules, e.capacity, e.creator_id, u.username, COALESCE(COUNT(ep.user_id), 0) FROM events e JOIN users u ON e.creator_id = u.id LEFT JOIN event_participants ep ON e.id = ep.event_id WHERE e.creator_id = ? GROUP BY e.id", creatorID)
+	rows, err := s.DB.Query("SELECT e.id, e.title, e.description, e.date, e.time, e.location, e.rules, e.capacity, e.creator_id, e.image_url, u.username, COALESCE(COUNT(ep.user_id), 0) FROM events e JOIN users u ON e.creator_id = u.id LEFT JOIN event_participants ep ON e.id = ep.event_id WHERE e.creator_id = ? GROUP BY e.id", creatorID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get events by creator ID: %w", err)
 	}
@@ -143,7 +145,7 @@ func (s *EventService) GetEventsByCreatorID(creatorID int) ([]models.Event, erro
 		var event models.Event
 		var rulesJSON string
 		var hostName string
-		if err := rows.Scan(&event.ID, &event.Title, &event.Description, &event.Date, &event.Time, &event.Location, &rulesJSON, &event.Capacity, &event.CreatorID, &hostName, &event.Participants); err != nil {
+		if err := rows.Scan(&event.ID, &event.Title, &event.Description, &event.Date, &event.Time, &event.Location, &rulesJSON, &event.Capacity, &event.CreatorID, &event.ImageURL, &hostName, &event.Participants); err != nil {
 			return nil, fmt.Errorf("failed to scan event by creator ID: %w", err)
 		}
 
@@ -158,7 +160,7 @@ func (s *EventService) GetEventsByCreatorID(creatorID int) ([]models.Event, erro
 }
 
 func (s *EventService) GetAllEventsExcludingCreatorID(creatorID int) ([]models.Event, error) {
-	rows, err := s.DB.Query("SELECT e.id, e.title, e.description, e.date, e.time, e.location, e.rules, e.capacity, e.creator_id, u.username, COALESCE(COUNT(ep.user_id), 0) FROM events e JOIN users u ON e.creator_id = u.id LEFT JOIN event_participants ep ON e.id = ep.event_id WHERE e.creator_id != ? GROUP BY e.id", creatorID)
+	rows, err := s.DB.Query("SELECT e.id, e.title, e.description, e.date, e.time, e.location, e.rules, e.capacity, e.creator_id, e.image_url, u.username, COALESCE(COUNT(ep.user_id), 0) FROM events e JOIN users u ON e.creator_id = u.id LEFT JOIN event_participants ep ON e.id = ep.event_id WHERE e.creator_id != ? GROUP BY e.id", creatorID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all events excluding creator ID: %w", err)
 	}
@@ -169,7 +171,7 @@ func (s *EventService) GetAllEventsExcludingCreatorID(creatorID int) ([]models.E
 		var event models.Event
 		var rulesJSON string
 		var hostName string
-		if err := rows.Scan(&event.ID, &event.Title, &event.Description, &event.Date, &event.Time, &event.Location, &rulesJSON, &event.Capacity, &event.CreatorID, &hostName, &event.Participants); err != nil {
+		if err := rows.Scan(&event.ID, &event.Title, &event.Description, &event.Date, &event.Time, &event.Location, &rulesJSON, &event.Capacity, &event.CreatorID, &event.ImageURL, &hostName, &event.Participants); err != nil {
 			return nil, fmt.Errorf("failed to scan event excluding creator ID: %w", err)
 		}
 
@@ -245,7 +247,7 @@ func (s *EventService) IsUserParticipant(eventID, userID int) (bool, error) {
 func (s *EventService) GetEventsByParticipantID(userID int) ([]models.Event, error) {
 	rows, err := s.DB.Query(`
 		SELECT
-			e.id, e.title, e.description, e.date, e.time, e.location, e.rules, e.capacity, e.creator_id, u.username, COALESCE(COUNT(ep.user_id), 0)
+			e.id, e.title, e.description, e.date, e.time, e.location, e.rules, e.capacity, e.creator_id, e.image_url, u.username, COALESCE(COUNT(ep.user_id), 0)
 		FROM events e
 		JOIN users u ON e.creator_id = u.id
 		JOIN event_participants ep_main ON e.id = ep_main.event_id
@@ -263,7 +265,7 @@ func (s *EventService) GetEventsByParticipantID(userID int) ([]models.Event, err
 		var event models.Event
 		var rulesJSON string
 		var hostName string
-		if err := rows.Scan(&event.ID, &event.Title, &event.Description, &event.Date, &event.Time, &event.Location, &rulesJSON, &event.Capacity, &event.CreatorID, &hostName, &event.Participants); err != nil {
+		if err := rows.Scan(&event.ID, &event.Title, &event.Description, &event.Date, &event.Time, &event.Location, &rulesJSON, &event.Capacity, &event.CreatorID, &event.ImageURL, &hostName, &event.Participants); err != nil {
 			return nil, fmt.Errorf("failed to scan event by participant ID: %w", err)
 		}
 

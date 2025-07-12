@@ -10,6 +10,7 @@ type Event struct {
 	Rules       []string `json:"rules"`
 	Capacity    int      `json:"capacity"`
 	CreatorID   int      `json:"creator_id"`
+	ImageURL    string   `json:"image_url"`
 	HostName    string   `json:"host_name,omitempty"`
 	Participants int64     `json:"participants"`
 }

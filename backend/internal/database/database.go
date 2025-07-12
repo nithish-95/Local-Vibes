@@ -11,7 +11,7 @@ var DB *sql.DB
 
 func InitDB() {
 	var err error
-	DB, err = sql.Open("sqlite3", "../database/app.db")
+	DB, err = sql.Open("sqlite3", "../../../database/app.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,6 +36,7 @@ func InitDB() {
 		"location" TEXT NOT NULL,
 		"rules" TEXT,
 		"capacity" INTEGER NOT NULL DEFAULT 0,
+		"image_url" TEXT,
 		"creator_id" INTEGER,
 		FOREIGN KEY (creator_id) REFERENCES users(id)
 	);`

@@ -14,7 +14,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <!-- Event Card -->
         <div v-for="event in events" :key="event.id" class="bg-white rounded-lg shadow-lg overflow-hidden">
-          <img :src="`https://picsum.photos/seed/${event.id}/400/200`" alt="Event Image" class="w-full h-48 object-cover">
+          <img :src="event.image_url ? `http://localhost:8080${event.image_url}` : `https://picsum.photos/seed/${event.id}/400/200`" alt="Event Image" class="w-full h-48 object-cover">
           <div class="p-6">
             <h3 class="text-xl font-bold mb-2">{{ event.title }}</h3>
             <p class="text-gray-700 mb-4">{{ event.description }}</p>

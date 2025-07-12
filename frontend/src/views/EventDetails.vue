@@ -6,7 +6,7 @@
     </button>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div>
-        <img :src="`https://picsum.photos/seed/${event.id}/600/400`" alt="Event Image" class="w-full h-auto rounded-lg shadow-md">
+        <img :src="event.image_url ? `http://localhost:8080${event.image_url}` : `https://picsum.photos/seed/${event.id}/600/400`" alt="Event Image" class="w-full h-auto rounded-lg shadow-md">
       </div>
       <div>
         <h2 class="text-4xl font-bold text-gray-900 mb-4">{{ event.title }}</h2>
