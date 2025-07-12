@@ -55,6 +55,18 @@ const routes = [
     props: true,
     meta: { requiresAuth: true },
   },
+  {
+    path: '/profile/edit',
+    name: 'EditProfile',
+    component: () => import('../views/EditProfile.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/profile/settings',
+    name: 'ProfileSettings',
+    component: () => import('../views/ProfileSettings.vue'),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
