@@ -26,10 +26,10 @@ module.exports = {
         // Custom shades for specific use cases
         'light-bg': colors.slate[50],
         'dark-bg': colors.slate[900],
-        'light-text': colors.blueGray[900],
+        'light-text': colors.slate[900],
         'dark-text': colors.white,
       },
     },
   },
-  plugins: [require('@tailwindcss/line-clamp')],
+  plugins: [],
 };

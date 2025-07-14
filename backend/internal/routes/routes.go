@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors" // Import the cors package
 	"github.com/nithish-95/Local-Vibes/backend/cmd/handlers"
 	"github.com/nithish-95/Local-Vibes/backend/internal/database"
 	"github.com/nithish-95/Local-Vibes/backend/internal/services"
@@ -13,6 +14,16 @@ import (
 func SetupRouter() *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+
+	// Configure CORS middleware
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"*"}, // Allow all origins for development
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
 
 	// Initialize services
 	userService := services.NewUserService(database.DB)
