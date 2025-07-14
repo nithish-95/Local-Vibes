@@ -1,7 +1,7 @@
 <template>
-  <div id="app" class="bg-gray-100 min-h-screen flex flex-col">
+  <div id="app" class="bg-light-bg min-h-screen flex flex-col font-sans">
     <Navbar />
-    <main class="flex-grow container mx-auto p-4">
+    <main class="flex-grow container mx-auto pt-20 px-4 pb-4">
       <router-view />
     </main>
     <Footer />
