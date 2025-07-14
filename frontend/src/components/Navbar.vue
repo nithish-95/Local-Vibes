@@ -1,5 +1,5 @@
 <template>
-  <nav class="bg-gray-800 text-white p-4">
+  <nav class="bg-gray-800 text-white p-4 fixed top-0 left-0 w-full z-50">
     <div class="container mx-auto flex justify-between items-center">
       <router-link to="/" class="text-2xl font-bold" @click="isMobileMenuOpen = false">LocalVibes</router-link>
 
