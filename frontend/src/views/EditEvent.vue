@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-2xl mx-auto p-8 bg-white rounded-lg shadow-md">
+  <div class="max-w-2xl mx-auto p-8 bg-white rounded-lg shadow-md mt-8">
     <button @click="$router.go(-1)" class="mb-4 text-gray-600 hover:text-gray-800 flex items-center">
       <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
       Back
@@ -7,41 +7,41 @@
     <h2 class="text-3xl font-bold text-center text-gray-900 mb-8">Edit Event</h2>
     <form @submit.prevent="update" class="space-y-6">
       <div>
-        <label for="title" class="text-sm font-medium text-gray-700">Title</label>
-        <input type="text" v-model="event.title" id="title" name="title" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <label for="title" class="text-sm font-medium text-blue-gray-700">Title</label>
+        <input type="text" v-model="event.title" id="title" name="title" required class="w-full px-4 py-2 mt-2 border border-blue-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
       </div>
       <div>
-        <label for="description" class="text-sm font-medium text-gray-700">Description</label>
-        <textarea v-model="event.description" id="description" name="description" rows="4" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        <label for="description" class="text-sm font-medium text-blue-gray-700">Description</label>
+        <textarea v-model="event.description" id="description" name="description" rows="4" required class="w-full px-4 py-2 mt-2 border border-blue-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label for="date" class="text-sm font-medium text-gray-700">Date</label>
-          <input type="date" v-model="event.date" id="date" name="date" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <label for="date" class="text-sm font-medium text-blue-gray-700">Date</label>
+          <input type="date" v-model="event.date" id="date" name="date" required class="w-full px-4 py-2 mt-2 border border-blue-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
         </div>
         <div>
-          <label for="time" class="text-sm font-medium text-gray-700">Time</label>
-          <input type="time" v-model="event.time" id="time" name="time" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <label for="time" class="text-sm font-medium text-blue-gray-700">Time</label>
+          <input type="time" v-model="event.time" id="time" name="time" required class="w-full px-4 py-2 mt-2 border border-blue-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
         </div>
       </div>
       <div>
-        <label for="location" class="text-sm font-medium text-gray-700">Location</label>
-        <input type="text" v-model="event.location" id="location" name="location" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <label for="location" class="text-sm font-medium text-blue-gray-700">Location</label>
+        <input type="text" v-model="event.location" id="location" name="location" required class="w-full px-4 py-2 mt-2 border border-blue-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
       </div>
       <div>
-        <label for="capacity" class="text-sm font-medium text-gray-700">Capacity</label>
-        <input type="number" v-model.number="event.capacity" id="capacity" name="capacity" required class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <label for="capacity" class="text-sm font-medium text-blue-gray-700">Capacity</label>
+        <input type="number" v-model.number="event.capacity" id="capacity" name="capacity" required class="w-full px-4 py-2 mt-2 border border-blue-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
       </div>
       <div>
-        <label for="image_url" class="text-sm font-medium text-gray-700">Event Image URL (Optional)</label>
-        <input type="url" v-model="event.image_url" id="image_url" name="image_url" autocomplete="off" class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <label for="image_url" class="text-sm font-medium text-blue-gray-700">Event Image URL (Optional)</label>
+        <input type="url" v-model="event.image_url" id="image_url" name="image_url" autocomplete="off" class="w-full px-4 py-2 mt-2 border border-blue-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
       </div>
       <div>
-        <label for="rules" class="text-sm font-medium text-gray-700">Custom Rules (one per line)</label>
-        <textarea v-model="rulesInput" id="rules" name="rules" rows="4" class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        <label for="rules" class="text-sm font-medium text-blue-gray-700">Custom Rules (one per line)</label>
+        <textarea v-model="rulesInput" id="rules" name="rules" rows="4" class="w-full px-4 py-2 mt-2 border border-blue-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
       </div>
       <div>
-        <button type="submit" class="w-full py-3 px-4 font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Update Event</button>
+        <button type="submit" class="w-full py-3 px-4 font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-md transition-colors duration-300">Update Event</button>
       </div>
     </form>
   </div>
