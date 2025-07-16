@@ -1,4 +1,3 @@
-
 # Go
 *.mod
 *.sum
@@ -15,3 +14,9 @@ dist/
 
 # Database
 *.db
+
+# Added by Gemini
+backend/bin/
+cookies.txt
+mail.go
+todo.md

@@ -56,6 +56,7 @@ func SetupRouter() *chi.Mux {
 	r.Post("/api/events/{eventID}/leave", eventHandler.LeaveEvent)
 	r.Get("/api/events/{eventID}/is-joined", eventHandler.IsJoined)
 	r.Get("/api/events/joined", eventHandler.GetJoinedEvents)
+	r.Get("/api/events/search", eventHandler.SearchEvents)
 
 	return r
 }

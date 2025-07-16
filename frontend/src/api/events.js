@@ -195,3 +195,25 @@ export async function getJoinedEvents() {
     throw error;
   }
 }
+
+export async function searchEvents(filter) {
+  try {
+    const params = new URLSearchParams();
+    if (filter.q) params.append('q', filter.q);
+    if (filter.startDate) params.append('startDate', filter.startDate);
+    if (filter.endDate) params.append('endDate', filter.endDate);
+    if (filter.capacityMin) params.append('capacityMin', filter.capacityMin);
+    if (filter.capacityMax) params.append('capacityMax', filter.capacityMax);
+
+    const response = await fetch(`${API_BASE_URL}/events/search?${params.toString()}`);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to search events');
+    }
+    const data = await response.json();
+    return data || [];
+  } catch (error) {
+    console.error('Error searching events:', error);
+    throw error;
+  }
+}

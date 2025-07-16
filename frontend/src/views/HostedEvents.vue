@@ -57,6 +57,7 @@ export default {
   },
   async created() {
     this.events = await getHostedEvents();
+    console.log('Hosted events fetched:', this.events); // Added console.log
   },
   methods: {
     showConfirmDeleteModal(eventID) {

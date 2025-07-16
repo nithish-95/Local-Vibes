@@ -20,6 +20,8 @@ func NewEventHandler(eventService *services.EventService) *EventHandler {
 	return &EventHandler{EventService: eventService}
 }
 
+
+
 func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	sess, _ := session.Store.Get(r, "session-name")
 	userID, ok := sess.Values["user_id"].(int)
@@ -151,7 +153,11 @@ func (h *EventHandler) GetHostedEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(events)
+	if events == nil {
+		json.NewEncoder(w).Encode([]models.Event{}) // Encode empty array if nil
+	} else {
+		json.NewEncoder(w).Encode(events)
+	}
 }
 
 func (h *EventHandler) GetAvailableEvents(w http.ResponseWriter, r *http.Request) {
@@ -268,6 +274,46 @@ func (h *EventHandler) GetJoinedEvents(w http.ResponseWriter, r *http.Request) {
 	events, err := h.EventService.GetEventsByParticipantID(userID)
 	if err != nil {
 		log.Printf("Error getting joined events: %v", err)
+		sendJSONError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(events)
+}
+
+func (h *EventHandler) SearchEvents(w http.ResponseWriter, r *http.Request) {
+	var filter services.EventFilter
+
+	// Parse query parameters
+	filter.Query = r.URL.Query().Get("q")
+	filter.StartDate = r.URL.Query().Get("startDate")
+	filter.EndDate = r.URL.Query().Get("endDate")
+
+	if capacityMinStr := r.URL.Query().Get("capacityMin"); capacityMinStr != "" {
+		val, err := strconv.Atoi(capacityMinStr)
+		if err == nil {
+			filter.CapacityMin = val
+		}
+	}
+	if capacityMaxStr := r.URL.Query().Get("capacityMax"); capacityMaxStr != "" {
+		val, err := strconv.Atoi(capacityMaxStr)
+		if err == nil {
+			filter.CapacityMax = val
+		}
+	}
+
+	// Optional: If you want to filter by creator_id from query params
+	// if creatorIDStr := r.URL.Query().Get("creatorId"); creatorIDStr != "" {
+	// 	val, err := strconv.Atoi(creatorIDStr)
+	// 	if err == nil {
+	// 		filter.CreatorID = val
+	// 	}
+	// }
+
+	events, err := h.EventService.SearchEvents(filter)
+	if err != nil {
+		log.Printf("Error searching events: %v", err)
 		sendJSONError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

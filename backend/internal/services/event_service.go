@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	
-
 	"github.com/nithish-95/Local-Vibes/backend/internal/models"
+	"log"
+	"strings"
 )
 
 type EventService struct {
@@ -42,16 +42,16 @@ func (s *EventService) CreateEvent(event *models.Event) (int64, error) {
 	id, err := result.LastInsertId()
 	if err != nil {
 		return 0, fmt.Errorf("failed to get last insert ID: %w", err)
-    }
+	}
 
-    // Automatically add the creator as a participant
-    _, err = s.DB.Exec("INSERT INTO event_participants (event_id, user_id) VALUES (?, ?)", id, event.CreatorID)
-    if err != nil {
-        // Log the error but don't fail the event creation if adding participant fails
-        fmt.Printf("Warning: Failed to auto-add creator %d to event %d: %v\n", event.CreatorID, id, err)
-    }
+	// Automatically add the creator as a participant
+	_, err = s.DB.Exec("INSERT INTO event_participants (event_id, user_id) VALUES (?, ?)", id, event.CreatorID)
+	if err != nil {
+		// Log the error but don't fail the event creation if adding participant fails
+		fmt.Printf("Warning: Failed to auto-add creator %d to event %d: %v\n", event.CreatorID, id, err)
+	}
 
-    return id, nil
+	return id, nil
 }
 
 func (s *EventService) GetEvents() ([]models.Event, error) {
@@ -125,6 +125,8 @@ func (s *EventService) GetEventByID(eventID int) (*models.Event, error) {
 		}
 		return nil, fmt.Errorf("failed to get event by ID: %w", err)
 	}
+
+	log.Printf("Rules JSON from DB for event %d: %s", eventID, rulesJSON) // Added log
 
 	if err := json.Unmarshal([]byte(rulesJSON), &event.Rules); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal rules for event ID %d: %w", event.ID, err)
@@ -271,6 +273,86 @@ func (s *EventService) GetEventsByParticipantID(userID int) ([]models.Event, err
 
 		if err := json.Unmarshal([]byte(rulesJSON), &event.Rules); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal rules for event ID %d: %w", event.ID, err)
+		}
+		event.HostName = hostName
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+// EventFilter defines parameters for filtering events
+type EventFilter struct {
+	Query       string
+	StartDate   string
+	EndDate     string
+	CapacityMin int
+	CapacityMax int
+	CreatorID   int
+}
+
+func (s *EventService) SearchEvents(filter EventFilter) ([]models.Event, error) {
+	var args []interface{}
+	query := `
+		SELECT
+			e.id, e.title, e.description, e.date, e.time, e.location, e.rules, e.capacity, e.creator_id, e.image_url, u.username, COALESCE(COUNT(ep.user_id), 0)
+		FROM events e
+		JOIN users u ON e.creator_id = u.id
+		LEFT JOIN event_participants ep ON e.id = ep.event_id
+	`
+
+	whereClauses := []string{}
+
+	if filter.Query != "" {
+		query += ` JOIN events_fts ON e.id = events_fts.rowid`
+		whereClauses = append(whereClauses, "events_fts MATCH ?")
+		args = append(args, filter.Query)
+	}
+
+	if filter.StartDate != "" {
+		whereClauses = append(whereClauses, "e.date >= ?")
+		args = append(args, filter.StartDate)
+	}
+	if filter.EndDate != "" {
+		whereClauses = append(whereClauses, "e.date <= ?")
+		args = append(args, filter.EndDate)
+	}
+	if filter.CapacityMin > 0 {
+		whereClauses = append(whereClauses, "e.capacity >= ?")
+		args = append(args, filter.CapacityMin)
+	}
+	if filter.CapacityMax > 0 {
+		whereClauses = append(whereClauses, "e.capacity <= ?")
+		args = append(args, filter.CapacityMax)
+	}
+	if filter.CreatorID > 0 {
+		whereClauses = append(whereClauses, "e.creator_id = ?")
+		args = append(args, filter.CreatorID)
+	}
+
+	if len(whereClauses) > 0 {
+		query += " WHERE " + strings.Join(whereClauses, " AND ")
+	}
+
+	query += ` GROUP BY e.id`
+
+	rows, err := s.DB.Query(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search events: %w", err)
+	}
+	defer rows.Close()
+
+	var events []models.Event
+	for rows.Next() {
+		var event models.Event
+		var rulesJSON string
+		var hostName string
+		if err := rows.Scan(&event.ID, &event.Title, &event.Description, &event.Date, &event.Time, &event.Location, &rulesJSON, &event.Capacity, &event.CreatorID, &event.ImageURL, &hostName, &event.Participants); err != nil {
+			return nil, fmt.Errorf("failed to scan searched event: %w", err)
+		}
+
+		if err := json.Unmarshal([]byte(rulesJSON), &event.Rules); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal rules for searched event ID %d: %w", event.ID, err)
 		}
 		event.HostName = hostName
 		events = append(events, event)

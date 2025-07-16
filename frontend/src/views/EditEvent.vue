@@ -168,8 +168,10 @@ export default {
         image_url: fetchedEvent.image_url,
         rules: fetchedEvent.rules,
       };
+      console.log('Fetched event rules:', fetchedEvent.rules); // Added console.log
       if (fetchedEvent.rules) {
         this.rulesInput = fetchedEvent.rules.join('\n');
+        console.log('Rules input after join:', this.rulesInput); // Added console.log
       }
     } catch (error) {
       console.error('Error fetching event details:', error);
