@@ -31,7 +31,7 @@ func SetupRouter() *chi.Mux {
 
 	// Initialize handlers with services
 	authHandler := handlers.NewAuthHandler(userService)
-	eventHandler := handlers.NewEventHandler(eventService)
+	eventHandler := handlers.NewEventHandler(eventService, userService)
 
 	// Public routes
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {

@@ -72,7 +72,7 @@ The project is organized into two main parts: a `backend` and a `frontend`.
 **Backend:**
 ```bash
 cd backend/cmd/web
-go run main.go
+go run --tags "fts5" main.go
 ```
 The backend server will start on `http://localhost:8080`.
 

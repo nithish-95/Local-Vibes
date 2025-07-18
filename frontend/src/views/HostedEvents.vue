@@ -56,8 +56,9 @@ export default {
     };
   },
   async created() {
+    console.log('HostedEvents: created hook - fetching events');
     this.events = await getHostedEvents();
-    console.log('Hosted events fetched:', this.events); // Added console.log
+    console.log('Hosted events fetched:', this.events);
   },
   methods: {
     showConfirmDeleteModal(eventID) {

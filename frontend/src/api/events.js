@@ -94,6 +94,7 @@ export async function getHostedEvents() {
       throw new Error(errorData.message || 'Failed to fetch hosted events');
     }
     const data = await response.json();
+    console.log('Raw data from getHostedEvents API:', data); // Added log
     return data || [];
   } catch (error) {
     console.error('Error fetching hosted events:', error);

@@ -1,18 +1,19 @@
 package services
 
 import (
-	"database/sql"
 	"fmt"
-	
-	"github.com/nithish-95/Local-Vibes/backend/internal/models"
+
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
+
+	"github.com/nithish-95/Local-Vibes/backend/internal/models"
 )
 
 type UserService struct {
-	DB *sql.DB
+	DB *gorm.DB
 }
 
-func NewUserService(db *sql.DB) *UserService {
+func NewUserService(db *gorm.DB) *UserService {
 	return &UserService{DB: db}
 }
 
@@ -22,37 +23,34 @@ func (s *UserService) RegisterUser(username, password string) error {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	_, err = s.DB.Exec("INSERT INTO users (username, password) VALUES (?, ?)", username, string(hashedPassword))
-	if err != nil {
-		return fmt.Errorf("failed to register user: %w", err)
+	user := models.User{Username: username, Password: string(hashedPassword)}
+	result := s.DB.Create(&user)
+	if result.Error != nil {
+		return fmt.Errorf("failed to register user: %w", result.Error)
 	}
 	return nil
 }
 
-func (s *UserService) AuthenticateUser(username, password string) (int, error) {
-	var hashedPassword string
-	var userID int
-	err := s.DB.QueryRow("SELECT id, password FROM users WHERE username = ?", username).Scan(&userID, &hashedPassword)
+func (s *UserService) AuthenticateUser(username, password string) (uint, error) {
+	var user models.User
+	result := s.DB.Where("username = ?", username).First(&user)
+	if result.Error != nil {
+		return 0, fmt.Errorf("invalid username or password: %w", result.Error)
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
 		return 0, fmt.Errorf("invalid username or password: %w", err)
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-	if err != nil {
-		return 0, fmt.Errorf("invalid username or password: %w", err)
-	}
-
-	return userID, nil
+	return user.ID, nil
 }
 
-func (s *UserService) GetUserByID(userID int) (*models.User, error) {
+func (s *UserService) GetUserByID(userID uint) (*models.User, error) {
 	var user models.User
-	err := s.DB.QueryRow("SELECT id, username FROM users WHERE id = ?", userID).Scan(&user.ID, &user.Username)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("user not found")
-		}
-		return nil, fmt.Errorf("failed to get user: %w", err)
+	result := s.DB.First(&user, userID)
+	if result.Error != nil {
+		return nil, fmt.Errorf("user not found: %w", result.Error)
 	}
 	return &user, nil
 }

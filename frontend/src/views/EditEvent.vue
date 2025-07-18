@@ -168,10 +168,28 @@ export default {
         image_url: fetchedEvent.image_url,
         rules: fetchedEvent.rules,
       };
-      console.log('Fetched event rules:', fetchedEvent.rules); // Added console.log
-      if (fetchedEvent.rules) {
-        this.rulesInput = fetchedEvent.rules.join('\n');
-        console.log('Rules input after join:', this.rulesInput); // Added console.log
+      console.log('Fetched event rules:', fetchedEvent.rules);
+      let parsedRules = [];
+      if (fetchedEvent.rules && typeof fetchedEvent.rules === 'string' && fetchedEvent.rules.length > 0) {
+        try {
+          parsedRules = JSON.parse(fetchedEvent.rules);
+        } catch (e) {
+          console.error("Error parsing fetched event rules:", e);
+        }
+      }
+      this.event = {
+        title: fetchedEvent.title,
+        description: fetchedEvent.description,
+        date: fetchedEvent.date,
+        time: fetchedEvent.time,
+        location: fetchedEvent.location,
+        capacity: fetchedEvent.capacity,
+        image_url: fetchedEvent.image_url,
+        rules: parsedRules, // Assign the parsed array
+      };
+      if (parsedRules.length > 0) {
+        this.rulesInput = parsedRules.join('\n');
+        console.log('Rules input after join:', this.rulesInput);
       }
     } catch (error) {
       console.error('Error fetching event details:', error);
@@ -184,7 +202,7 @@ export default {
     async update(values) {
       try {
         const eventData = { ...values };
-        eventData.rules = this.rulesInput.split('\n').map(rule => rule.trim()).filter(rule => rule.length > 0);
+        eventData.rules = JSON.stringify(eventData.rulesInput.split('\n').map(rule => rule.trim()).filter(rule => rule.length > 0));
         await updateEvent(this.id, eventData);
         this.toast.success('Event updated successfully!');
         this.$router.push('/');

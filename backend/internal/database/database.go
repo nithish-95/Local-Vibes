@@ -1,33 +1,34 @@
 package database
 
 import (
-	"database/sql"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
-	_ "github.com/mattn/go-sqlite3"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+
+	"github.com/nithish-95/Local-Vibes/backend/internal/models"
 )
 
-var DB *sql.DB
+var DB *gorm.DB
 
-func InitDB() {
-	var err error
-	dbPath := "./database/app.db"
+func ConnectDB(dbPath string) (*gorm.DB, error) {
 	absPath, err := filepath.Abs(dbPath)
 	if err != nil {
-		log.Fatalf("Error getting absolute path for %s: %v", dbPath, err)
+		return nil, fmt.Errorf("Error getting absolute path for %s: %v", dbPath, err)
 	}
 
 	dir := filepath.Dir(absPath)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		log.Printf("Database directory %s does not exist. Creating...", dir)
 		if err := os.MkdirAll(dir, 0755); err != nil {
-			log.Fatalf("Error creating database directory %s: %v", dir, err)
+			return nil, fmt.Errorf("Error creating database directory %s: %v", dir, err)
 		}
 		log.Printf("Database directory %s created successfully.", dir)
 	} else if err != nil {
-		log.Fatalf("Error checking database directory %s: %v", dir, err)
+		return nil, fmt.Errorf("Error checking database directory %s: %v", dir, err)
 	} else {
 		log.Printf("Database directory %s already exists.", dir)
 	}
@@ -37,45 +38,22 @@ func InitDB() {
 	} else if os.IsNotExist(err) {
 		log.Printf("Database file %s does not exist. It will be created on open.", absPath)
 	} else {
-		log.Fatalf("Error checking database file %s: %v", absPath, err)
+		return nil, fmt.Errorf("Error checking database file %s: %v", absPath, err)
 	}
 
 	log.Printf("Attempting to open database at: %s", absPath)
-	DB, err = sql.Open("sqlite3", absPath)
+	db, err := gorm.Open(sqlite.Open(absPath), &gorm.Config{})
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("Failed to connect to database: %w", err)
 	}
 
-	createUsersTableSQL := `CREATE TABLE IF NOT EXISTS users (
-		"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-		"username" TEXT NOT NULL UNIQUE,
-		"password" TEXT NOT NULL
-	);`
-
-	_, err = DB.Exec(createUsersTableSQL)
+	// AutoMigrate will create/update tables based on GORM models
+	err = db.AutoMigrate(&models.User{}, &models.Event{})
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("Failed to auto migrate database: %w", err)
 	}
 
-	createEventsTableSQL := `CREATE TABLE IF NOT EXISTS events (
-		"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-		"title" TEXT NOT NULL,
-		"description" TEXT,
-		"date" TEXT NOT NULL,
-		"time" TEXT NOT NULL,
-		"location" TEXT NOT NULL,
-		"rules" TEXT,
-		"capacity" INTEGER NOT NULL DEFAULT 0,
-		"image_url" TEXT,
-		"creator_id" INTEGER,
-		FOREIGN KEY (creator_id) REFERENCES users(id)
-	);`
-
-	_, err = DB.Exec(createEventsTableSQL)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	// Create event_participants table manually as GORM doesn't handle many-to-many with custom join table easily
 	createEventParticipantsTableSQL := `CREATE TABLE IF NOT EXISTS event_participants (
 		"event_id" INTEGER NOT NULL,
 		"user_id" INTEGER NOT NULL,
@@ -84,16 +62,16 @@ func InitDB() {
 		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 	);`
 
-	_, err = DB.Exec(createEventParticipantsTableSQL)
+	err = db.Exec(createEventParticipantsTableSQL).Error
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("Failed to create event_participants table: %w", err)
 	}
 
 	// Create FTS5 virtual table for events
 	createEventsFTS := `CREATE VIRTUAL TABLE IF NOT EXISTS events_fts USING fts5(title, description, location, rules, content='events', content_rowid='id');`
-	_, err = DB.Exec(createEventsFTS)
+	err = db.Exec(createEventsFTS).Error
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("Failed to create FTS5 table: %w", err)
 	}
 
 	// Triggers to keep events_fts in sync with events table
@@ -101,9 +79,9 @@ func InitDB() {
 	CREATE TRIGGER IF NOT EXISTS events_ai AFTER INSERT ON events BEGIN
 		INSERT INTO events_fts(rowid, title, description, location, rules) VALUES (new.id, new.title, new.description, new.location, new.rules);
 	END;`
-	_, err = DB.Exec(createEventsFTSInsertTrigger)
+	err = db.Exec(createEventsFTSInsertTrigger).Error
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("Failed to create FTS5 insert trigger: %w", err)
 	}
 
 	createEventsFTSUpdateTrigger := `
@@ -111,17 +89,28 @@ func InitDB() {
 		INSERT INTO events_fts(events_fts, rowid, title, description, location, rules) VALUES('delete', old.id, old.title, old.description, old.location, old.rules);
 		INSERT INTO events_fts(rowid, title, description, location, rules) VALUES (new.id, new.title, new.description, new.location, new.rules);
 	END;`
-	_, err = DB.Exec(createEventsFTSUpdateTrigger)
+	err = db.Exec(createEventsFTSUpdateTrigger).Error
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("Failed to create FTS5 update trigger: %w", err)
 	}
 
 	createEventsFTSDeleteTrigger := `
 	CREATE TRIGGER IF NOT EXISTS events_ad AFTER DELETE ON events BEGIN
 		INSERT INTO events_fts(events_fts, rowid, title, description, location, rules) VALUES('delete', old.id, old.title, old.description, old.location, old.rules);
 	END;`
-	_, err = DB.Exec(createEventsFTSDeleteTrigger)
+	err = db.Exec(createEventsFTSDeleteTrigger).Error
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("Failed to create FTS5 delete trigger: %w", err)
+	}
+
+	return db, nil
+}
+
+func InitDB() {
+	var err error
+	dbPath := "./database/app.db"
+	DB, err = ConnectDB(dbPath)
+	if err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
 	}
 }

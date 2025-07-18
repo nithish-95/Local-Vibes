@@ -145,7 +145,7 @@ export default {
     async create(values) {
       try {
         const eventData = { ...values };
-        eventData.rules = this.rulesInput.split('\n').map(rule => rule.trim()).filter(rule => rule.length > 0);
+        eventData.rules = JSON.stringify(eventData.rulesInput.split('\n').map(rule => rule.trim()).filter(rule => rule.length > 0));
         await createEvent(eventData);
         this.toast.success('Event created successfully!');
         this.$router.push('/');

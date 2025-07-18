@@ -70,7 +70,22 @@ export default {
   async created() {
     try {
       this.event = await getEventByID(this.id);
-      this.isJoined = await checkIfJoined(this.id);
+
+    console.log('Raw event rules:', this.event.rules); // Add this line for debugging
+
+    // Parse rules from JSON string to array
+    if (this.event && typeof this.event.rules === 'string' && this.event.rules.length > 0) {
+      try {
+        this.event.rules = JSON.parse(this.event.rules);
+      } catch (e) {
+        console.error("Error parsing event rules:", e);
+        this.event.rules = []; // Fallback to empty array on error
+      }
+    } else {
+      this.event.rules = []; // Ensure it's an array even if empty or null
+    }
+
+    this.isJoined = await checkIfJoined(this.id);
     } catch (error) {
       console.error('Error fetching event details:', error);
     }

@@ -61,9 +61,15 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	sess.Values["user_id"] = userID
 	sess.Save(r, w)
 
-	w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(user)
+	// Fetch the user object to return it in the response
+	loggedInUser, err := h.UserService.GetUserByID(userID)
+	if err != nil {
+		sendJSONError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(loggedInUser)
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +82,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 func (h *AuthHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	sess, _ := session.Store.Get(r, "session-name")
-	userID, ok := sess.Values["user_id"].(int)
+	userID, ok := sess.Values["user_id"].(uint)
 	if !ok {
 		sendJSONError(w, "Not authenticated", http.StatusUnauthorized)
 		return

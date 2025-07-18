@@ -5,6 +5,7 @@
 *.dll
 *.so
 *.dylib
+*.txt
 
 # Node
 node_modules/
@@ -17,7 +18,7 @@ dist/
 
 # Added by Gemini
 backend/bin/
-cookies.txt
+curl_test
 mail.go
 todo.md
 HowToRun.md
