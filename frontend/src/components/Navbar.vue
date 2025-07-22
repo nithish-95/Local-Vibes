@@ -4,13 +4,13 @@
       <router-link to="/" class="text-2xl font-bold" @click="isMobileMenuOpen = false">LocalVibes</router-link>
 
       <!-- Desktop Menu -->
-      <div class="hidden md:flex space-x-4 items-center">
+      <div class="hidden md:flex space-x-6 items-center">
         <router-link to="/" class="hover:text-gray-300">Home</router-link>
         
         <!-- Events Dropdown -->
         <div class="relative group">
-          <button class="hover:text-gray-300 focus:outline-none">Events<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
-          <div class="absolute hidden group-hover:block bg-gray-700 text-white rounded-md shadow-lg py-2 z-10">
+          <button class="flex items-center space-x-1 hover:text-gray-300 focus:outline-none">Events<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+          <div class="absolute hidden group-hover:block bg-gray-700 text-white rounded-md shadow-lg py-2 z-10 w-max">
             <router-link to="/available-events" class="block px-4 py-2 hover:bg-gray-600">Available Events</router-link>
             <template v-if="sessionStore.isAuthenticated">
               <router-link to="/hosted-events" class="block px-4 py-2 hover:bg-gray-600">Hosted Events</router-link>
@@ -22,12 +22,12 @@
 
         <template v-if="sessionStore.isAuthenticated">
           <!-- Profile Dropdown -->
-          <div class="relative " ref="profileDropdown">
-            <button @click="toggleProfileDropdown" class="flex items-center space-x-1 hover:text-gray-300 focus:outline-none">
+          <div class="relative group">
+            <button class="flex items-center space-x-1 hover:text-gray-300 focus:outline-none">
               <span v-if="sessionStore.user">Welcome, {{ sessionStore.user.username }}!</span>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
-            <div v-if="isProfileDropdownOpen" class="absolute group-hover:block right-0 mt-2 w-48 bg-gray-700 text-white rounded-md shadow-lg py-2 z-20">
+            <div class="absolute hidden group-hover:block right-0 pt-2 w-48 bg-gray-700 text-white rounded-md shadow-lg py-2 z-20">
               <router-link to="/profile/edit" class="block px-4 py-2 hover:bg-gray-600">Edit Profile</router-link>
               <router-link to="/profile/settings" class="block px-4 py-2 hover:bg-gray-600">Settings</router-link>
               <div class="border-t border-gray-600 my-1"></div>
@@ -82,7 +82,6 @@ export default {
   data() {
     return {
       isMobileMenuOpen: false,
-      isProfileDropdownOpen: false,
     };
   },
   computed: {
@@ -93,30 +92,16 @@ export default {
       this.isMobileMenuOpen = !this.isMobileMenuOpen;
       this.isProfileDropdownOpen = false; // Close profile dropdown if mobile menu opens
     },
-    toggleProfileDropdown() {
-      this.isProfileDropdownOpen = !this.isProfileDropdownOpen;
-    },
-    closeProfileDropdown(event) {
-      if (this.$refs.profileDropdown && !this.$refs.profileDropdown.contains(event.target)) {
-        this.isProfileDropdownOpen = false;
-      }
-    },
+    
     async logoutUser() {
       try {
         await this.sessionStore.logout();
         this.$router.push('/login');
         this.isMobileMenuOpen = false; // Close mobile menu on logout
-        this.isProfileDropdownOpen = false; // Close profile dropdown on logout
       } catch (error) {
         console.error(error);
       }
     },
-  },
-  mounted() {
-    document.addEventListener('click', this.closeProfileDropdown);
-  },
-  beforeUnmount() {
-    document.removeEventListener('click', this.closeProfileDropdown);
   },
 };
 </script>
