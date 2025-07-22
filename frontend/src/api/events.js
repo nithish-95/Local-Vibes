@@ -6,10 +6,39 @@ export async function createEvent(eventData) {
     throw new Error('User not authenticated.');
   }
 
-  const { rules, ...rest } = eventData;
+  const combinedStartDateTime = `${eventData.date}T${eventData.time}`;
+  const eventStartDate = new Date(combinedStartDateTime);
+  const now = new Date();
+  const eightHoursFromNow = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+
+  console.log('eventData.date:', eventData.date);
+  console.log('eventData.time:', eventData.time);
+  console.log('combinedStartDateTime:', combinedStartDateTime);
+  console.log('eventStartDate:', eventStartDate);
+  console.log('now:', now);
+  console.log('eightHoursFromNow:', eightHoursFromNow);
+
+  if (isNaN(eventStartDate.getTime())) {
+    throw new Error('Invalid event date or time provided.');
+  }
+
+  if (eventStartDate < now) {
+    throw new Error('Cannot create an event in the past.');
+  }
+
+  if (eventStartDate < eightHoursFromNow) {
+    throw new Error('Event must be scheduled at least 8 hours from now.');
+  }
+
   const eventToInsert = {
-    ...rest,
-    rules: rules || [], // Ensure rules is an array, even if empty
+    title: eventData.title,
+    description: eventData.description,
+    location: eventData.location,
+    capacity: eventData.capacity,
+    image_url: eventData.image_url,
+    date: eventData.date,
+    time: eventData.time,
+    rules: eventData.rules || [],
     creator_id: user.id,
   };
 
