@@ -68,13 +68,19 @@ export async function createEvent(eventData) {
   return data[0];
 }
 
-export async function getEvents() {
-  const { data, error } = await supabase
+export async function getEvents(searchQuery = '') {
+  let query = supabase
     .from('event_with_participant_count')
     .select(`
       *,
       creator_username
     `);
+
+  if (searchQuery) {
+    query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Supabase getEvents error:', error);
@@ -173,6 +179,7 @@ export async function getAvailableEvents(searchQuery = '') {
     .neq('creator_id', user.id); // Not equal to current user's ID
 
   if (searchQuery) {
+    // Implement fuzzy search using ilike for case-insensitive partial matching
     query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
   }
 

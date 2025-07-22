@@ -15,7 +15,8 @@ This project consists of a Go-based backend that serves a RESTful API and a Vue.
 - **CRUD Operations:** Full Create, Read, Update, and Delete functionality for events created by the user.
 
 ### Event Discovery and Joining
-- **Local Event Search:** Users can browse and search for local events available in their area.
+- **Local Event Search:** Users can browse and search for local events available in their area. This feature utilizes fuzzy matching, allowing users to find events even with partial or slightly misspelled keywords. The search is performed across event titles and descriptions.
+  - **Implementation Details:** The fuzzy search is implemented on the Supabase backend using the `ilike` operator with wildcard characters (`%`). This enables case-insensitive pattern matching. On the frontend, the search input in both the Home page and Available Events page triggers an API call to fetch filtered events based on the user's input.
 - **Event Joining:** Users can easily join an event with a single click.
 - **Leave Events:** Users can leave an event they have previously joined.
 

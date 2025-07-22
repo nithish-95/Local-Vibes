@@ -5,7 +5,7 @@
       <h1 v-else class="text-5xl font-bold">Find Your Vibe</h1>
       <p class="text-xl mt-4">Discover and join local events happening near you.</p>
       <div class="mt-8">
-        <input type="text" id="event-search" placeholder="Search for events..." class="w-full max-w-md p-4 rounded-full text-gray-900">
+        <input type="text" id="event-search" v-model="searchQuery" placeholder="Search for events..." class="w-full max-w-md p-4 rounded-full text-gray-900">
       </div>
     </div>
 
@@ -39,13 +39,22 @@ export default {
   data() {
     return {
       events: [],
+      searchQuery: '',
     };
   },
   computed: {
     ...mapStores(useSessionStore),
   },
+  watch: {
+    searchQuery: 'fetchEvents',
+  },
   async created() {
-    this.events = await getEvents();
+    this.fetchEvents();
+  },
+  methods: {
+    async fetchEvents() {
+      this.events = await getEvents(this.searchQuery);
+    },
   },
 };
 </script>
