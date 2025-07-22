@@ -65,10 +65,15 @@
 
 <script>
 import { getEventByID, updateEvent } from '../api/events';
+import { useToastStore } from '../stores/toast';
 
 export default {
   name: 'EditEvent',
   props: ['id'],
+  setup() {
+    const toastStore = useToastStore();
+    return { toastStore };
+  },
   data() {
     return {
       event: {},
@@ -109,11 +114,11 @@ export default {
         this.event.rules = this.rulesInput.split('\n').map(rule => rule.trim()).filter(rule => rule.length > 0);
         this.event.tags = this.selectedTags;
         await updateEvent(this.id, this.event);
-        alert('Event updated successfully!');
+        this.toastStore.showToast('Event updated successfully!', 'success');
         this.$router.push('/');
       } catch (error) {
         console.error(error);
-        alert('Failed to update event.');
+        this.toastStore.showToast(`Error updating event: ${error.message}`, 'error');
       }
     },
   },

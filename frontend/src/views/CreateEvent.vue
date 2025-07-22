@@ -73,9 +73,14 @@
 
 <script>
 import { createEvent } from '../api/events';
+import { useToastStore } from '../stores/toast';
 
 export default {
   name: 'CreateEvent',
+  setup() {
+    const toastStore = useToastStore();
+    return { toastStore };
+  },
   data() {
     return {
       event: {
@@ -182,6 +187,7 @@ export default {
 
       if (!this.isFormValid) {
         console.error('Form has validation errors. Please correct them.');
+        this.toastStore.showToast('Form has validation errors. Please correct them.', 'error');
         return;
       }
 
@@ -189,9 +195,11 @@ export default {
         this.event.rules = trimmedRules;
         this.event.tags = this.selectedTags; // Use selectedTags directly
         await createEvent(this.event);
+        this.toastStore.showToast('Event created successfully!', 'success');
         this.$router.push('/');
       } catch (error) {
         console.error(error);
+        this.toastStore.showToast(`Error creating event: ${error.message}`, 'error');
         // Display backend error if any
         this.formErrors.dateTime = error.message; // Assuming backend errors are primarily date/time related
       }

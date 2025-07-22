@@ -75,10 +75,15 @@
 
 <script>
 import { useSessionStore } from '../stores/session';
+import { useToastStore } from '../stores/toast';
 import { mapStores } from 'pinia';
 
 export default {
   name: 'Navbar',
+  setup() {
+    const toastStore = useToastStore();
+    return { toastStore };
+  },
   data() {
     return {
       isMobileMenuOpen: false,
@@ -96,10 +101,12 @@ export default {
     async logoutUser() {
       try {
         await this.sessionStore.logout();
+        this.toastStore.showToast('Logged out successfully!', 'success');
         this.$router.push('/login');
         this.isMobileMenuOpen = false; // Close mobile menu on logout
       } catch (error) {
         console.error(error);
+        this.toastStore.showToast(`Logout failed: ${error.message}`, 'error');
       }
     },
   },

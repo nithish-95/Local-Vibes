@@ -5,12 +5,14 @@
       <router-view />
     </main>
     <Footer />
+    <ToastNotification />
   </div>
 </template>
 
 <script>
 import Navbar from './components/Navbar.vue';
 import Footer from './components/Footer.vue';
+import ToastNotification from './components/ToastNotification.vue';
 import { useSessionStore } from './stores/session';
 
 export default {
@@ -18,6 +20,7 @@ export default {
   components: {
     Navbar,
     Footer,
+    ToastNotification,
   },
   setup() {
     const sessionStore = useSessionStore();

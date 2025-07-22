@@ -62,10 +62,15 @@
 
 <script>
 import { getEventByID, joinEvent, leaveEvent, checkIfJoined } from '../api/events';
+import { useToastStore } from '../stores/toast';
 
 export default {
   name: 'EventDetails',
   props: ['id'],
+  setup() {
+    const toastStore = useToastStore();
+    return { toastStore };
+  },
   data() {
     return {
       event: null,
@@ -84,23 +89,23 @@ export default {
     async join() {
       try {
         await joinEvent(this.id);
-        alert('Successfully joined the event!');
+        this.toastStore.showToast('Successfully joined the event!', 'success');
         this.event = await getEventByID(this.id);
         this.isJoined = true;
       } catch (error) {
         console.error('Error joining event:', error);
-        alert('Failed to join the event. You may have already joined or the event is full.');
+        this.toastStore.showToast(error.message, 'error');
       }
     },
     async leave() {
       try {
         await leaveEvent(this.id);
-        alert('Successfully left the event!');
+        this.toastStore.showToast('Successfully left the event!', 'success');
         this.event = await getEventByID(this.id);
         this.isJoined = false;
       } catch (error) {
         console.error('Error leaving event:', error);
-        alert('Failed to leave the event.');
+        this.toastStore.showToast(error.message, 'error');
       }
     },
   },

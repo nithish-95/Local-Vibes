@@ -230,6 +230,26 @@ export async function joinEvent(eventID) {
     throw new Error('User not authenticated.');
   }
 
+  // Fetch event details to check its date and time
+  const { data: eventDetails, error: eventDetailsError } = await supabase
+    .from('events')
+    .select('date, time')
+    .eq('id', eventID)
+    .single();
+
+  if (eventDetailsError) {
+    console.error('Supabase joinEvent event details error:', eventDetailsError);
+    throw new Error(eventDetailsError.message);
+  }
+
+  const combinedStartDateTime = `${eventDetails.date}T${eventDetails.time}`;
+  const eventStartDate = new Date(combinedStartDateTime);
+  const now = new Date();
+
+  if (eventStartDate < now) {
+    throw new Error('Cannot join an event that has already passed.');
+  }
+
   // Check if already joined
   const { data: existingParticipant, error: checkError } = await supabase
     .from('event_participants')
