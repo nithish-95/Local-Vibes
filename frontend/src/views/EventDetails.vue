@@ -11,7 +11,9 @@
       <div>
         <h2 class="text-4xl font-bold text-gray-900 mb-4">{{ event.title }}</h2>
         <p class="text-gray-700 mb-6">{{ event.description }}</p>
-        
+        <div v-if="event.tags && event.tags.length" class="flex flex-wrap gap-2 mb-4">
+          <span v-for="tag in event.tags" :key="tag" class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ tag }}</span>
+        </div>
         <div class="space-y-4">
           <div class="flex items-center">
             <span class="font-bold text-gray-800 w-24">Date:</span>

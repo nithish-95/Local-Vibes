@@ -37,6 +37,22 @@
         <input type="url" v-model="event.image_url" id="image_url" name="image_url" autocomplete="off" class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
       <div>
+        <label class="text-sm font-medium text-gray-700 mb-2 block">Tags</label>
+        <div class="flex flex-wrap gap-2">
+          <div v-for="tag in predefinedTags" :key="tag" class="flex items-center">
+            <input type="checkbox" :id="`tag-${tag}`" :value="tag" v-model="selectedTags" :disabled="selectedTags.length >= 5 && !selectedTags.includes(tag)" class="hidden">
+            <label :for="`tag-${tag}`" class="px-3 py-1 rounded-full border cursor-pointer text-sm transition-colors duration-200"
+              :class="{
+                'bg-blue-500 text-white border-blue-500': selectedTags.includes(tag),
+                'bg-gray-200 text-gray-700 border-gray-300 hover:bg-gray-300': !selectedTags.includes(tag),
+                'opacity-50 cursor-not-allowed': selectedTags.length >= 5 && !selectedTags.includes(tag)
+              }"
+            >{{ tag }}</label>
+          </div>
+        </div>
+        <span v-if="formErrors.tags" class="text-red-500 text-sm">{{ formErrors.tags }}</span>
+      </div>
+      <div>
         <label for="rules" class="text-sm font-medium text-gray-700">Custom Rules (one per line)</label>
         <textarea v-model="rulesInput" id="rules" name="rules" rows="4" class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
       </div>
@@ -57,6 +73,13 @@ export default {
     return {
       event: {},
       rulesInput: '',
+      predefinedTags: [
+        'Music', 'Sports', 'Food', 'Art', 'Tech', 'Outdoor', 'Community', 'Education', 'Health', 'Family',
+      ],
+      selectedTags: [],
+      formErrors: {
+        tags: '',
+      },
     };
   },
   async created() {
@@ -65,20 +88,41 @@ export default {
       if (this.event.rules) {
         this.rulesInput = this.event.rules.join('\n');
       }
+      if (this.event.tags) {
+        this.selectedTags = this.event.tags;
+      }
     } catch (error) {
       console.error('Error fetching event details:', error);
     }
   },
   methods: {
     async update() {
+      // Add validation for tags
+      if (this.selectedTags.length > 5) {
+        this.formErrors.tags = 'You can select a maximum of 5 tags.';
+        return;
+      } else {
+        this.formErrors.tags = '';
+      }
+
       try {
         this.event.rules = this.rulesInput.split('\n').map(rule => rule.trim()).filter(rule => rule.length > 0);
+        this.event.tags = this.selectedTags;
         await updateEvent(this.id, this.event);
         alert('Event updated successfully!');
         this.$router.push('/');
       } catch (error) {
         console.error(error);
         alert('Failed to update event.');
+      }
+    },
+  },
+  watch: {
+    'selectedTags'(newValue) {
+      if (newValue.length > 5) {
+        this.formErrors.tags = 'You can select a maximum of 5 tags.';
+      } else {
+        this.formErrors.tags = '';
       }
     },
   },

@@ -44,6 +44,22 @@
         <input type="url" v-model="event.image_url" id="image_url" name="image_url" autocomplete="off" class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
       <div>
+        <label class="text-sm font-medium text-gray-700 mb-2 block">Tags</label>
+        <div class="flex flex-wrap gap-2">
+          <div v-for="tag in predefinedTags" :key="tag" class="flex items-center">
+            <input type="checkbox" :id="`tag-${tag}`" :value="tag" v-model="selectedTags" :disabled="selectedTags.length >= 5 && !selectedTags.includes(tag)" class="hidden">
+            <label :for="`tag-${tag}`" class="px-3 py-1 rounded-full border cursor-pointer text-sm transition-colors duration-200"
+              :class="{
+                'bg-blue-500 text-white border-blue-500': selectedTags.includes(tag),
+                'bg-gray-200 text-gray-700 border-gray-300 hover:bg-gray-300': !selectedTags.includes(tag),
+                'opacity-50 cursor-not-allowed': selectedTags.length >= 5 && !selectedTags.includes(tag)
+              }"
+            >{{ tag }}</label>
+          </div>
+        </div>
+        <span v-if="formErrors.tags" class="text-red-500 text-sm">{{ formErrors.tags }}</span>
+      </div>
+      <div>
         <label for="rules" class="text-sm font-medium text-gray-700">Custom Rules (one per line)</label>
         <textarea v-model="rulesInput" id="rules" name="rules" autocomplete="off" rows="4" class="w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
         <span v-if="formErrors.rules" class="text-red-500 text-sm">{{ formErrors.rules }}</span>
@@ -72,6 +88,10 @@ export default {
         rules: [],
       },
       rulesInput: '',
+      predefinedTags: [
+        'Music', 'Sports', 'Food', 'Art', 'Tech', 'Outdoor', 'Community', 'Education', 'Health', 'Family',
+      ],
+      selectedTags: [],
       formErrors: {
         title: '',
         description: '',
@@ -79,6 +99,7 @@ export default {
         capacity: '',
         rules: '',
         dateTime: '',
+        tags: '',
       },
     };
   },
@@ -98,7 +119,8 @@ export default {
              !this.formErrors.location &&
              !this.formErrors.capacity &&
              !this.formErrors.rules &&
-             !this.formErrors.dateTime;
+             !this.formErrors.dateTime &&
+             !this.formErrors.tags;
     },
   },
   watch: {
@@ -117,6 +139,13 @@ export default {
     rulesInput(newValue) {
       const trimmedRules = newValue.split('\n').map(rule => rule.trim()).filter(rule => rule.length > 0);
       this.formErrors.rules = trimmedRules.length === 0 ? 'At least one rule is required.' : '';
+    },
+    'selectedTags'(newValue) {
+      if (newValue.length > 5) {
+        this.formErrors.tags = 'You can select a maximum of 5 tags.';
+      } else {
+        this.formErrors.tags = '';
+      }
     },
     combinedDateTime(newValue) {
       if (!newValue) {
@@ -158,6 +187,7 @@ export default {
 
       try {
         this.event.rules = trimmedRules;
+        this.event.tags = this.selectedTags; // Use selectedTags directly
         await createEvent(this.event);
         this.$router.push('/');
       } catch (error) {

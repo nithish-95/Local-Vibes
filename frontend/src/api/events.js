@@ -39,6 +39,7 @@ export async function createEvent(eventData) {
     date: eventData.date,
     time: eventData.time,
     rules: eventData.rules || [],
+    tags: eventData.tags || [],
     creator_id: user.id,
   };
 
@@ -73,7 +74,8 @@ export async function getEvents(searchQuery = '') {
     .from('event_with_participant_count')
     .select(`
       *,
-      creator_username
+      creator_username,
+      tags
     `);
 
   if (searchQuery) {
@@ -101,7 +103,7 @@ export async function updateEvent(eventID, eventData) {
     throw new Error('User not authenticated.');
   }
 
-  const { rules, ...rest } = eventData;
+  const { rules, creator_username, participants, host_name, participants_count, ...rest } = eventData;
   const eventToUpdate = {
     ...rest,
     rules: rules || [],
@@ -148,7 +150,8 @@ export async function getHostedEvents() {
     .from('event_with_participant_count')
     .select(`
       *,
-      creator_username
+      creator_username,
+      tags
     `)
     .eq('creator_id', user.id);
 
@@ -174,7 +177,8 @@ export async function getAvailableEvents(searchQuery = '') {
     .from('event_with_participant_count')
     .select(`
       *,
-      creator_username
+      creator_username,
+      tags
     `)
     .neq('creator_id', user.id); // Not equal to current user's ID
 
@@ -202,7 +206,8 @@ export async function getEventByID(eventID) {
     .from('event_with_participant_count')
     .select(`
       *,
-      creator_username
+      creator_username,
+      tags
     `)
     .eq('id', eventID)
     .single(); // Expecting a single record
